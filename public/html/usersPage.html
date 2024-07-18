@@ -1,0 +1,36 @@
+{{define "users"}}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="/public/css/bootstrap.min.css">
+    <title>Title</title>
+</head>
+
+<body>
+    <div class="container-fluid table-container">
+        <table class="table table-bordered table-striped w-100">
+                <tr>
+                    <th>ID</th>
+                    <th>Login</th>
+                    <th>Email</th>
+                    <th>Password</th>
+                </tr>
+                {{range .}}
+                <tr>
+                    <td>{{.ID}}</td>
+                    <td>{{.Login}}</td>
+                    <td>{{.Password}}</td>
+                    <td>{{.Email}}</td>
+                </tr>
+                {{end}}
+        </table>
+    </div>
+    <script src="/public/js/jquery.min.js"></script>
+    <script src="/public/js/bootstrap.min.js" ></script>
+</body>
+
+</html>
+{{end}}

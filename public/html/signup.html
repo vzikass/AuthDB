@@ -1,0 +1,31 @@
+{{define "signup"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Singup Page</title>
+</head>
+<body>
+<form id="loginForm" name="signUpForm" action="/signup" method="post" >
+    <label for="login">Login</label><br>
+    <input type="login" id="login" name="login" required><br>
+    <label for="email">Email</label><br>
+    <input type="email" id="email" name="email" required><br>
+    <label for="password">Password</label><br>
+    <input type="password" id="password" name="password" required><br>
+    <label for="password2">Repeat password</label><br>
+    <input type="password" id="password2" name="password2" required><br>
+    <br>
+    <button type="submit" name="submitBtn">Signup</button>
+</form>
+{{if .}}
+<div>
+    {{.Message}}
+</div>
+{{end}}
+<br>
+<a href="/login">Login</a>
+</body>
+</html>
+{{end}}
