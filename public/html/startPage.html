@@ -11,10 +11,12 @@
             right: 52px;
             font-size: 24px;
         }
-        .commands-container {
-            position: absolute;
-            text-align: left;
-            font-size: 30px;
+        .startmessage-container{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
         }
     </style>
 </head>
@@ -22,11 +24,8 @@
     <div class="logout-container">
         <a href="/logout">Logout</a>
     </div>
-    <div class="commands-container">
-        <h2>Available links:</h2>
-        <ul>
-            <li><a href="/users">View registered users</a></li>
-        </ul>
+    <div class="delete-container">
+        <a href="/delete">Delete account</a>
     </div>
 </body>
 </html>
