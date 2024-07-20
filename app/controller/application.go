@@ -41,13 +41,17 @@ func (a *App) Routes(r *httprouter.Router) {
 	r.GET("/login", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		a.LoginPage(w, "")
 	})
-	r.GET("/logout", a.Logout)
+	r.POST("/delete", a.authorized(a.DeleteAccount))
+	r.GET("/delete", a.authorized(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		a.renderDeleteConfirmationPage(w)
+	}))
+	r.GET("/", a.authorized(a.HomePage))
 
-	r.GET("/", a.authorized(a.StartPage))
+	r.GET("/logout", a.authorized(a.Logout))
+
+	// this is working with a database, so authorization is required
 	r.GET("/users", a.authorized(GetAllUsers))
 	r.POST("/users/add", a.authorized(AddUsers))
-	r.DELETE("/users/delete", a.authorized(DeleteUser))
-	r.POST("/users/update", a.authorized(UpdateUser))
 }
 
 func (a *App) LoginPage(w http.ResponseWriter, message string) {
@@ -202,7 +206,8 @@ func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
-		if _, ok := a.cache[token]; !ok {
+		_, ok := a.cache[token]
+		if !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
@@ -210,8 +215,8 @@ func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func (a *App) StartPage(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	path := filepath.Join("public", "html", "startPage.html")
+func (a *App) HomePage(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	path := filepath.Join("public", "html", "index.html")
 	tmpl, err := template.ParseFiles(path)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -222,4 +227,50 @@ func (a *App) StartPage(w http.ResponseWriter, r *http.Request, p httprouter.Par
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+}
+
+func (a *App) renderDeleteConfirmationPage(w http.ResponseWriter){
+	path := filepath.Join("public", "html", "delete.html")
+	tmpl, err := template.ParseFiles(path)
+	if err != nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("Error parsing template: %v", err)
+		return
+	}
+	err = tmpl.Execute(w, nil)
+	if err != nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("Error executing template: %v", err)
+		return
+	}
+}
+
+func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter.Params){
+	token, err := ReadCookie("token", r)
+	if err != nil{
+		log.Printf("Error reading token cookie: %v", err)
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	user, ok := a.cache[token]
+	if !ok{
+		log.Printf("Token not found in cache")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	err = a.repo.DeleteUserByID(a.ctx, user.ID)
+	if err != nil{
+		log.Printf("Error deleting user by ID: %v", err)
+		http.Error(w, "Something went wrong, please try later", http.StatusInternalServerError)
+		return
+	}
+	delete(a.cache, token)
+	for _, v := range r.Cookies(){
+		c := http.Cookie{
+			Name: v.Name,
+			MaxAge: -1,
+		}
+		http.SetCookie(w, &c)
+	}
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

@@ -7,12 +7,14 @@
 </head>
 <body>
 <form id="loginForm" name="loginForm" action="/login" method="post" class="mt-4">
-    <label for="login">Login</label><br>
-    <input type="login" id="login" name="login" autocomplete="on"><br>
-    <label for="password">Password</label><br>
-    <input type="password" id="password" name="password" autocomplete="on"><br>
-    <br>
-    <button type="submit" name="submitBtn">Login</button>
+    <div class="signinlabel-container">
+        <label for="login">Login</label><br>
+        <input type="login" id="login" name="login" autocomplete="on"><br>
+        <label for="password">Password</label><br>
+        <input type="password" id="password" name="password" autocomplete="on"><br>
+        <br>
+        <button type="submit" name="submitBtn">Login</button>
+    </div>
 </form>
 {{if . }}
 <div>

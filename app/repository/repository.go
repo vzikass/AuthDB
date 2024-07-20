@@ -35,10 +35,8 @@ func (r *Repository) UserExist(ctx context.Context, login, email string) (_ bool
 	return count > 0, nil
 }
 
-func (r *Repository) FindUserbyEmail(ctx context.Context, email string) (u User, err error) {
-	row := r.pool.QueryRow(ctx, `select * from users where email = $1`, email)
-	err = row.Scan(&u.ID, &u.Login, &u.Password, &u.Email)
-	if err != nil {
-		return u.fmt.Errorf("failed to query")
-	}
+func (r *Repository) DeleteUserByID(ctx context.Context, id int) error{
+	query := `delete from users where id = $1`
+	_, err := r.pool.Exec(ctx, query, id)
+	return err
 }

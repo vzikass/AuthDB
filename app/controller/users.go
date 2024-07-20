@@ -56,7 +56,7 @@ func AddUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 }
 
-func DeleteUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func DeleteUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	userId := p.ByName("userID")
 	ctx := context.Background()
 	user, err := repository.GetUserById(ctx, userId)
@@ -76,7 +76,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 }
 
-func UpdateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func UpdateUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	ctx := context.Background()
 	userId := p.ByName("userID")
 	login := r.FormValue("login")

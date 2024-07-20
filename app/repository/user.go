@@ -65,9 +65,3 @@ func (u *User) Update(ctx context.Context) (err error) {
 	_, err = Dbpool.Exec(ctx, query, u.Login, u.Email, u.Password, u.ID)
 	return
 }
-
-func AddFixtures(ctx context.Context) (u User, err error){
-	query := `insert into users (login, email, password) values ($1, $2, $3)`
-	_, err = Dbpool.Exec(ctx, query, u.Login, u.Email, u.Password)
-	return
-}
