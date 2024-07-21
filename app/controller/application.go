@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -125,6 +126,11 @@ func (a *App) SignupPage(w http.ResponseWriter, message string) {
 	}
 }
 
+func isNumeric(s string) bool {
+	re := regexp.MustCompile(`^\d+$`)
+	return re.MatchString(s)
+}
+
 func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	login := strings.TrimSpace(r.FormValue("login"))
 	email := strings.TrimSpace(r.FormValue("email"))
@@ -132,6 +138,10 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 	password2 := strings.TrimSpace(r.FormValue("password2"))
 	if login == "" || email == "" || password == "" || password2 == "" {
 		a.SignupPage(w, "Not all fields are filled in")
+		return
+	}
+	if isNumeric(login) {
+		a.SignupPage(w, "Login cannot be entirely numeric")
 		return
 	}
 	if password != password2 {
@@ -229,45 +239,45 @@ func (a *App) HomePage(w http.ResponseWriter, r *http.Request, p httprouter.Para
 	}
 }
 
-func (a *App) renderDeleteConfirmationPage(w http.ResponseWriter){
+func (a *App) renderDeleteConfirmationPage(w http.ResponseWriter) {
 	path := filepath.Join("public", "html", "delete.html")
 	tmpl, err := template.ParseFiles(path)
-	if err != nil{
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Printf("Error parsing template: %v", err)
 		return
 	}
 	err = tmpl.Execute(w, nil)
-	if err != nil{
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Printf("Error executing template: %v", err)
 		return
 	}
 }
 
-func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter.Params){
+func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	token, err := ReadCookie("token", r)
-	if err != nil{
+	if err != nil {
 		log.Printf("Error reading token cookie: %v", err)
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 	user, ok := a.cache[token]
-	if !ok{
+	if !ok {
 		log.Printf("Token not found in cache")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 	err = a.repo.DeleteUserByID(a.ctx, user.ID)
-	if err != nil{
+	if err != nil {
 		log.Printf("Error deleting user by ID: %v", err)
 		http.Error(w, "Something went wrong, please try later", http.StatusInternalServerError)
 		return
 	}
 	delete(a.cache, token)
-	for _, v := range r.Cookies(){
+	for _, v := range r.Cookies() {
 		c := http.Cookie{
-			Name: v.Name,
+			Name:   v.Name,
 			MaxAge: -1,
 		}
 		http.SetCookie(w, &c)

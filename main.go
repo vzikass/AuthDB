@@ -6,15 +6,25 @@ import (
 	"exercise/app/repository"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
 )
 
 func main() {
 	ctx := context.Background()
 
-	// Connect to database (Postgres)
-	dbpool, err := repository.InitDBConn(ctx)
+	// Load from .env file
+	if err := godotenv.Load("db.env"); err != nil {
+		log.Fatalf("Failed to load .env file: %v", err)
+	}
+	dbURL, exist := os.LookupEnv("DATABASE_URL")
+	if !exist {
+		log.Print("No variables with the same name were found")
+	}
+
+	dbpool, err := repository.InitDBConn(ctx, dbURL)
 	if err != nil {
 		log.Fatalf("Error init DB connection: %v\n", err)
 	}
@@ -26,7 +36,7 @@ func main() {
 	a.Routes(r)
 
 	// Start Local Server
-	err = http.ListenAndServe("localhost:4444", r)
+	err = http.ListenAndServe("0.0.0.0:4444", r)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

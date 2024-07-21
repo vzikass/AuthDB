@@ -12,9 +12,8 @@ import (
 
 var Dbpool *pgxpool.Pool
 
-func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
-	url := "host=127.0.0.1 port=5432 user=postgres password=193566 dbname=authdb sslmode=disable"
-	cfg, err := pgxpool.ParseConfig(url)
+func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err error) {
+	cfg, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
 		err = fmt.Errorf("failed to parse pg config: %w", err)
 		return
@@ -24,7 +23,7 @@ func InitDBConn(ctx context.Context) (dbpool *pgxpool.Pool, err error) {
 	cfg.HealthCheckPeriod = 1 * time.Minute
 	cfg.MaxConnLifetime = 24 * time.Hour
 	cfg.MaxConnIdleTime = 30 * time.Minute
-	cfg.ConnConfig.ConnectTimeout = 1 * time.Second
+	cfg.ConnConfig.ConnectTimeout = 5 * time.Second
 	cfg.ConnConfig.DialFunc = (&net.Dialer{
 		KeepAlive: cfg.HealthCheckPeriod,
 		Timeout:   cfg.ConnConfig.ConnectTimeout,
