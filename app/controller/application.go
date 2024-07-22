@@ -34,6 +34,8 @@ func NewApp(ctx context.Context, dbpool *pgxpool.Pool) *App {
 func (a *App) Routes(r *httprouter.Router) {
 	r.ServeFiles("/public/*filepath", http.Dir("public"))
 
+	r.GET("/", a.authorized(a.HomePage))
+
 	r.POST("/signup", a.Signup)
 	r.GET("/signup", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		a.SignupPage(w, "")
@@ -46,13 +48,16 @@ func (a *App) Routes(r *httprouter.Router) {
 	r.GET("/delete", a.authorized(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		a.renderDeleteConfirmationPage(w)
 	}))
-	r.GET("/", a.authorized(a.HomePage))
-
+	r.POST("/update", a.authorized(a.UpdateData))
+	r.GET("/update", a.authorized(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		a.UpdateUserPage(w, "")
+	}))
 	r.GET("/logout", a.authorized(a.Logout))
+
 
 	// this is working with a database, so authorization is required
 	r.GET("/users", a.authorized(GetAllUsers))
-	r.POST("/users/add", a.authorized(AddUsers))
+
 }
 
 func (a *App) LoginPage(w http.ResponseWriter, message string) {
@@ -227,7 +232,9 @@ func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 
 func (a *App) HomePage(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	path := filepath.Join("public", "html", "index.html")
-	tmpl, err := template.ParseFiles(path)
+	path2 := filepath.Join("public", "html", "common.html")
+	path3 := filepath.Join("public", "html", "update.html")
+	tmpl, err := template.ParseFiles(path, path2, path3)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -283,4 +290,120 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 		http.SetCookie(w, &c)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
+
+func (a *App) UpdateUserPage(w http.ResponseWriter, message string){
+	// Кнопка на HomePage "change data"
+	// При нажатии вылезает окно как при подтверждении удаления юзера
+	// Спрашивается что вы хотите изменить и 3 кнопки: login, email, password
+	// При нажатии на одну из кнопок еще одно окно с полем куда записывается новые данные
+	// и кнопка Save для сохранения изменений
+	path := filepath.Join("public", "html", "update.html")
+	tmpl, err := template.ParseFiles(path, filepath.Join("public", "html", "common.html"))
+	if err != nil{
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = tmpl.Execute(w, map[string]string{"Message": message})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+}
+
+func (a *App) UpdateLogin(w http.ResponseWriter, oldLogin, newLogin string) error{
+	user, err := a.repo.FindUserByLogin(a.ctx, oldLogin)
+	if err != nil{
+		a.UpdateUserPage(w, "User not found")
+		return err
+	}
+	if user.Login != newLogin {
+		query := `UPDATE users SET login = $1 WHERE login = $2`
+		err = a.repo.UpdateData(a.ctx, query, newLogin, oldLogin)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return err
+		}
+		return nil
+	}
+	a.UpdateUserPage(w, "This login already exists")
+	return fmt.Errorf("login already exists")
+}
+
+func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) error {
+	user, err := a.repo.FindUserByEmail(a.ctx, oldEmail)
+	if err != nil{
+		a.UpdateUserPage(w, "User not found")
+		return err
+	}
+    if user.Email != newEmail {
+		query := `UPDATE users SET email = $1 WHERE email = $2`
+		err = a.repo.UpdateData(a.ctx, query, newEmail, oldEmail)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return err
+		}
+		return nil
+	}
+
+	a.UpdateUserPage(w, "This email already exists")
+	return fmt.Errorf("email already exists")
+}
+
+func (a *App) UpdatePassword(w http.ResponseWriter, oldPassword, newPassword string) error {
+    _, err := a.repo.FindUserByPassword(a.ctx, oldPassword)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	hashedNewPassword, err := utils.GenerateHash(newPassword)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	query := `UPDATE users SET password = $1 WHERE password = $2`
+	err = a.repo.UpdateData(a.ctx, query, hashedNewPassword, oldPassword)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	return nil
+}
+
+
+func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Params){
+	// если пользователь хочет сменить логин то проверить по r.FormValue("oldLogin")
+	// вместе с user.Email и user.Password если такой юзер есть то прочитать новый логин
+	// через  r.FormValue("newLogin") и обновить в бд
+	// Для email и password соответсвенно по той же схеме
+	oldLogin := r.FormValue("oldLogin")
+    newLogin := r.FormValue("newLogin")
+    oldEmail := r.FormValue("oldEmail")
+    newEmail := r.FormValue("newEmail")
+    oldPassword := r.FormValue("oldPassword")
+    newPassword := r.FormValue("newPassword")
+	
+	if oldLogin != "" && newLogin != ""{
+		err := a.UpdateLogin(w, oldLogin, newLogin)
+		if err != nil{
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}else if oldEmail != "" && newEmail != ""{
+		err := a.UpdateEmail(w, oldEmail, newEmail)
+		if err != nil{
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}else if oldPassword != "" && newPassword != ""{
+		err := a.UpdatePassword(w, oldPassword, newPassword)
+		if err != nil{
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}else{
+		http.Error(w, "No valid update data provided", http.StatusBadRequest)
+        return
+	}
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
