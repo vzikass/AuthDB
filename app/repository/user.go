@@ -12,13 +12,16 @@ type User struct {
 	Password string `json:"password" db:"password"`
 	Email    string `json:"email" db:"email"`
 }
-
+var(
+	HashPassword string
+)
 func NewUser(login, email, password string) (*User, error) {
 	hashedPassword, err := utils.GenerateHash(password)
 	if err != nil {
 		log.Fatalf("Error hashing password: %v\n", err)
 		return nil, err
 	}
+	HashPassword = hashedPassword
 	return &User{Login: login, Email: email, Password: hashedPassword}, nil
 }
 func GetAllUsers() (users []User, err error) {

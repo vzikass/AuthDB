@@ -77,11 +77,12 @@
                 </div>
                 <button type="submit">Save</button>
             </form>
-            {{if .Message}}
+            {{if .}}
             <div>
                 {{.Message}}
             </div>
             {{end}}
+            <br>
         </div>
     </div>
     {{end}}
@@ -141,13 +142,10 @@
                 `;
             } else if (type === 'password') {
                 fieldsHtml = `
-                    <label for="oldPassword">Old Password:</label>
-                    <input type="password" id="oldPassword" name="oldPassword" required>
                     <label for="newPassword">New Password:</label>
                     <input type="password" id="newPassword" name="newPassword" required>
                 `;
             }
-
             updateFieldsContainer.innerHTML = fieldsHtml;
             updateFormModal.style.display = "block";
         }

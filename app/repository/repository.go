@@ -41,11 +41,19 @@ func (r *Repository) DeleteUserByID(ctx context.Context, id int) error{
 	return err
 }
 
+func (r *Repository) FindUser(ctx context.Context, password string) (exist bool, err error){
+	query := `select * from users where password = $1`
+	_, err = r.pool.Exec(ctx, query, password)
+	if err != nil{
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *Repository) UpdateData(ctx context.Context, query, new, old string) error{
 	_, err := r.pool.Exec(ctx, query, new, old)
 	return err
 }
-
 func (r *Repository) FindUserByEmail(ctx context.Context, email string) (u User, err error){
 	row := r.pool.QueryRow(ctx, `select id, login, email, password from users where email = $1`,
 email)
