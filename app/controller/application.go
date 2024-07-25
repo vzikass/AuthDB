@@ -342,38 +342,35 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 		return nil
 	}
 	a.UpdateUserPage(w, "This email already exists")
-
 	return fmt.Errorf("email already exists")
 }
 
-func (a *App) UpdatePassword(w http.ResponseWriter, newPassword string) error {
+func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword string) error {
 	userHashedPass := repository.HashPassword
-	exist, err := a.repo.FindUser(a.ctx, userHashedPass)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return err
-	}
 	if len(newPassword) <= 3 {
 		a.UpdateUserPage(w, "Minimum field length - 4 characters")
 	}
-	if isNumeric(newPassword) {
-		a.UpdateUserPage(w, "Login cannot be entirely numeric")
+	user, err := a.repo.FindUser(a.ctx, userHashedPass)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
 	}
 	hashedNewPassword, err := utils.GenerateHash(newPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
-	query := `UPDATE users SET password = $1 WHERE password = $2`
-	if exist {
+	if user.Password != newPassword{
+		query := `UPDATE users SET password = $1 WHERE password = $2`
 		err = a.repo.UpdateData(a.ctx, query, hashedNewPassword, userHashedPass)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return err
 		}
-		repository.HashPassword = hashedNewPassword
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
-	a.UpdateUserPage(w, "Server Error, please try later")
+	user.Password = hashedNewPassword
+	a.UpdateUserPage(w, "Success!")
 	return err
 }
 
@@ -397,12 +394,12 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 			return
 		}
 	} else if newPassword != "" {
-		err := a.UpdatePassword(w, newPassword)
+		err := a.UpdatePassword(w, r, newPassword)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		} else {
+	} else {
 			http.Error(w, "No valid update data provided", http.StatusBadRequest)
 			return
 		}
