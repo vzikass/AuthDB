@@ -17,7 +17,7 @@ And other things I've encountered in the writing process.
 
 ## Project launch
 ### Requirements
-**The golang 1.22.5 version is required to install and run the project**
+**The golang 1.22.1 version is required to install and run the project**
 
 **Make sure you have all the necessary dependencies installed beforehand**
 
