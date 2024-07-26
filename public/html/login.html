@@ -4,8 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Login page</title>
+    <style>
+        .loginForm-container{
+            text-align: center;
+            font-size: 20px;
+        }
+    </style>
 </head>
 <body>
+    <div class="loginForm-container">
 <form id="loginForm" name="loginForm" action="/login" method="post" class="mt-4">
     <div class="signinlabel-container">
         <label for="login">Login</label><br>
@@ -23,6 +30,7 @@
 {{end}}
 <br>
 <a href="/signup">Signup</a>
+</div>
 </body>
 </html>
 {{end}}
