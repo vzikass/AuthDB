@@ -17,7 +17,7 @@ And other things I've encountered in the writing process.
 
 ## Project launch
 ### Requirements
-**The golang 1.22.5 version is required to install and run the project**
+**The golang 1.22.1 version is required to install and run the project**
 
 **Make sure you have all the necessary dependencies installed beforehand**
 
@@ -33,7 +33,7 @@ docker compose up --build
 Application will be available at [localhost:4444](http://localhost:4444)
 
 ## Testing
-*I don't see much point in testing, because in the process I gradually test the work myself. But since the project is intended for personal use, you can practice and make some Unit Tests, Integration Test or other tests. Perhaps I will add more tests if I think it is necessary.*
+*I don't see much point in testing, because in the process I gradually test the work myself. But since the project is intended for personal use, you can practice and make some Unit Tests, Integration Test or other tests. Perhaps I will add more tests if I think it's necessary.*
 
 ## Achievements
 - [X] Write terrible code
