@@ -23,7 +23,7 @@ func main() {
 	if !exist {
 		log.Print("No variables with the same name were found")
 	}
-
+	// Connect db (postgres)
 	dbpool, err := repository.InitDBConn(ctx, dbURL)
 	if err != nil {
 		log.Fatalf("Error init DB connection: %v\n", err)

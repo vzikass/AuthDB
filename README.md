@@ -5,6 +5,8 @@
 ![GitHub Created At](https://img.shields.io/github/created-at/vzikass/AuthDB)
 ![Go version](https://img.shields.io/github/go-mod/go-version/vzikass/AuthDB)
 
+![df393f61366e8280393dd079fbf8e0e0e05c634c597c28a1bb22b2c3de153203](https://github.com/user-attachments/assets/5c6319f3-f505-46cf-814e-d063882d8f07)
+
 **AuthDB** is a project I wrote to practice the following things:
 + User registration with automatic addition of the user to the database.
   + The password is automatically hashed and the database receives the already hashed password.
