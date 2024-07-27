@@ -5,7 +5,6 @@
 ![GitHub Created At](https://img.shields.io/github/created-at/vzikass/AuthDB)
 ![Go version](https://img.shields.io/github/go-mod/go-version/vzikass/AuthDB)
 
-![df393f61366e8280393dd079fbf8e0e0e05c634c597c28a1bb22b2c3de153203](https://github.com/user-attachments/assets/5c6319f3-f505-46cf-814e-d063882d8f07)
 
 **AuthDB** is a project I wrote to practice the following things:
 + User registration with automatic addition of the user to the database.
@@ -16,6 +15,8 @@
 + Querying the database.
 + Docker image and containers.\
 And other things I've encountered in the writing process.
+
+[Here is the answer to your probably first question when you see this project](https://github.com/vzikass/AuthDB?tab=readme-ov-file#why-did-i-develop-this-project)
 
 ## Project launch
 ### Requirements
