@@ -37,7 +37,7 @@ func AddUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	password := r.FormValue("password")
 
 	if login == "" || email == "" || password == "" {
-		http.Error(w, "not all fields are filled in", http.StatusBadRequest)
+		http.Error(w, "Not all fields are filled in", http.StatusBadRequest)
 		return
 	}
 	user, err := repository.NewUser(login, email, password)
@@ -56,6 +56,9 @@ func AddUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 }
 
+// in the future you can add new functionality using these functions
+
+/*
 func DeleteUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	userId := p.ByName("userID")
 	ctx := context.Background()
@@ -102,3 +105,4 @@ func UpdateUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		return
 	}
 }
+*/

@@ -49,7 +49,7 @@ Application will be available at [localhost:4444](http://localhost:4444)
 ~~Just to be~~
 
 ## Project team
-1. Вячеслав Ивкин (Vyacheslav Ivkin) https://github.com/vzikass\
+1. Вячеслав Ивкин (Vyacheslav Ivkin) https://github.com/vzikass
 
 ## Contributing
 Bug reports and/or pull requests are welcome!\

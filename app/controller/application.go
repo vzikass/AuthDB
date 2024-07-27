@@ -127,6 +127,7 @@ func (a *App) SignupPage(w http.ResponseWriter, message string) {
 }
 
 func isNumeric(s string) bool {
+	// numbers from 0 to 9 matches the previous token between one and unlimited times
 	re := regexp.MustCompile(`^\d+$`)
 	return re.MatchString(s)
 }
@@ -348,7 +349,7 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 	if len(newPassword) <= 3 {
 		a.UpdateUserPage(w, "Minimum field length - 4 characters")
 	}
-	user, err := a.repo.FindUser(a.ctx, userHashedPass)
+	user, err := a.repo.FindUserByPassword(a.ctx, userHashedPass)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
@@ -368,7 +369,6 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 	user.Password = hashedNewPassword
-	a.UpdateUserPage(w, "Success!")
 	return err
 }
 
