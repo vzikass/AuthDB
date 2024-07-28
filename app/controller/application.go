@@ -53,6 +53,8 @@ func (a *App) Routes(r *httprouter.Router) {
 		a.UpdateUserPage(w, "")
 	}))
 	r.GET("/logout", a.authorized(a.Logout))
+
+	r.GET("/users", a.authorized(GetAllUsers))
 }
 
 func (a *App) LoginPage(w http.ResponseWriter, message string) {
