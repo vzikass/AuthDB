@@ -91,7 +91,11 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		a.LoginPage(w, "Incorrect password")
 		return
 	}
-	token := utils.GenerateRandomToken()
+	token, err := utils.GenerateToken(user.Login)
+	if err != nil{
+		log.Fatalf("Error generate token: %v", err)
+		return
+	}
 	hashedToken, err := utils.GenerateHash(token)
 	if err != nil {
 		log.Fatalf("Error generate hash token: %v\n", err)

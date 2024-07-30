@@ -23,7 +23,7 @@ services:
     ports:
       - "4444:4444"
     environment:
-      DATABASE_URL: postgres://postgres:password@db:5432/dname?sslmode=disable
+      DATABASE_URL: postgres://postgres:psqlPass@db:5432/DBname?sslmode=disable
     depends_on:
       db:
         condition: service_healthy
