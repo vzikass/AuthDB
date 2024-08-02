@@ -16,7 +16,7 @@ services:
       start_period: 30s
       timeout: 5s
     volumes:
-      - ./initdb:/docker-entrypoint-initdb.d 
+      - ./initdb:/docker-entrypoint-initdb.d
 
   web:
     build: .

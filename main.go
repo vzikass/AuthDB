@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"exercise/app/controller"
-	"exercise/app/repository"
+	"AuthDB/app/controller"
+	"AuthDB/app/repository"
 	"log"
 	"net/http"
 	"os"

@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"exercise/app/repository"
+	"AuthDB/app/repository"
 	"html/template"
 	"net/http"
 	"path/filepath"

@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"exercise/utils"
+	"AuthDB/utils"
 	"log"
 )
 
@@ -12,9 +12,11 @@ type User struct {
 	Password string `json:"password" db:"password"`
 	Email    string `json:"email" db:"email"`
 }
+
 var (
 	HashPassword string
 )
+
 func NewUser(login, email, password string) (*User, error) {
 	hashedPassword, err := utils.GenerateHash(password)
 	if err != nil {

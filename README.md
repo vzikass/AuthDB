@@ -13,8 +13,12 @@
 + Creating a cookie for the user.
 + HTTP request methods.
 + Querying the database.
-+ Docker image and containers.\
++ Docker image and containers.
++ Kubernetes([minikube](https://kubernetes.io/docs/tutorials/hello-minikube/))
+  
 And other things I've encountered in the writing process.
+
+*This list will grow as I apply what I've learned to it.* 
 
 [Here is the answer to your probably first question when you see this project](https://github.com/vzikass/AuthDB?tab=readme-ov-file#why-did-i-develop-this-project)
 

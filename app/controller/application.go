@@ -2,8 +2,8 @@ package controller
 
 import (
 	"context"
-	"exercise/app/repository"
-	"exercise/utils"
+	"AuthDB/app/repository"
+	"AuthDB/utils"
 	"fmt"
 	"html/template"
 	"log"
