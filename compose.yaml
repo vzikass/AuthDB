@@ -28,4 +28,4 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - /Users/vyacheslavivkin/Desktop/dev/go/AuthDB/db.env:/app/db.env
+      - /Users/vyacheslavivkin/Desktop/dev/go/AuthDB/.env:/app/.env
