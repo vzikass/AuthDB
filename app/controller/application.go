@@ -23,7 +23,7 @@ type App struct {
 	ctx     context.Context
 	repo    *repository.Repository
 	cache   map[string]repository.User
-	cacheMu sync.Mutex
+	cacheMu sync.Mutex 
 }
 
 func NewApp(ctx context.Context, dbpool *pgxpool.Pool) *App {
@@ -31,7 +31,7 @@ func NewApp(ctx context.Context, dbpool *pgxpool.Pool) *App {
 		cache: make(map[string]repository.User)}
 }
 
-func (a *App) Routes(r *httprouter.Router) {
+func (a *App) Routes(r *httprouter.Router) { 
 	r.ServeFiles("/public/*filepath", http.Dir("public"))
 
 	r.GET("/", a.authorized(a.HomePage))

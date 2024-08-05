@@ -1,6 +1,6 @@
 module AuthDB
 
-go 1.22.1
+go 1.22
 
 require github.com/go-vgo/robotgo v0.110.1
 
