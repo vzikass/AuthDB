@@ -96,19 +96,14 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		log.Fatalf("Error generate token: %v", err)
 		return
 	}
-	hashedToken, err := utils.GenerateHash(token)
-	if err != nil {
-		log.Fatalf("Error generate hash token: %v\n", err)
-		return
-	}
 	// to protect access to hash
 	a.cacheMu.Lock()
-	a.cache[hashedToken] = user
+	a.cache[token] = user
 	a.cacheMu.Unlock()
 	// Create cookies when login
 	livingTime := 60 * time.Minute
 	expiration := time.Now().Add(livingTime)
-	cookie := http.Cookie{Name: "token", Value: url.QueryEscape(hashedToken),
+	cookie := http.Cookie{Name: "token", Value: url.QueryEscape(token),
 		Expires: expiration, Secure: true, HttpOnly: true}
 	http.SetCookie(w, &cookie)
 	http.Redirect(w, r, "/", http.StatusSeeOther)

@@ -1,29 +1,21 @@
 package utils
 
 import (
-	"log"
-	"time"
+	"fmt"
 
-	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 )
 
-var (
-	SecretKey = []byte("secret")
-)
 
-func GenerateToken(username string) (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-	// map to store claims
-	claims := token.Claims.(jwt.MapClaims)
-	// set token
-	claims["username"] = username
-	// expiration time
-	claims["exp"] = time.Now().Add(24 * time.Hour).Unix()
+const maxPasswordLength = 72
 
-	tokenString, err := token.SignedString(SecretKey)
-	if err != nil {
-		log.Fatalf("Error generating token: %v", err)
-		return "", nil
+func GenerateToken(password string) (string, error) {
+	if len(password) > maxPasswordLength {
+		return "", fmt.Errorf("password length exceeds %d bytes", maxPasswordLength)
 	}
-	return tokenString, nil
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", fmt.Errorf("generate hash token: %w", err)
+	}
+	return string(hashedPassword), nil
 }
