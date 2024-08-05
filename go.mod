@@ -2,8 +2,6 @@ module AuthDB
 
 go 1.22
 
-require github.com/go-vgo/robotgo v0.110.1
-
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
