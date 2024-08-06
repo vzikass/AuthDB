@@ -30,7 +30,6 @@ jobs:
 
     - name: Test
       run: go test -v ./...
-        # No tests yet
 
   docker:
     runs-on: ubuntu-latest

@@ -7,8 +7,8 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: yourDBpassword
-      POSTGRES_DB: yourDBname
+      POSTGRES_PASSWORD: 193566
+      POSTGRES_DB: AuthDB
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -23,9 +23,18 @@ services:
     ports:
       - "4444:4444"
     environment:
-      DATABASE_URL: postgres://postgres:yourDBpassword@db:5432/yourDBname?sslmode=disable
+      DATABASE_URL: postgres://postgres:193566@db:5432/AuthDB?sslmode=disable
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - /Users/vyacheslavivkin/Desktop/dev/go/AuthDB/db.env:/app/db.env
+
+  tests:
+    build: .
+    command: go test ./...
+    environment:
+      DATABASE_URL: postgres://postgres:193566@db:5432/AuthDB?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy

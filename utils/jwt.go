@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/dgrijalva/jwt-go"
 )
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET_KEY"))
@@ -17,15 +17,15 @@ func GenerateJWT(userID string) (string, error) {
 	return token.SignedString(jwtSecret)
 }
 
-func ParseJWT(tokenString string) (*jwt.Token, *jwt.MapClaims, error){
+func ParseJWT(tokenString string) (*jwt.Token, *jwt.MapClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
 	})
-	if err != nil{
+	if err != nil {
 		return nil, nil, err
 	}
 	claims, ok := token.Claims.(*jwt.MapClaims)
-	if !ok{
+	if !ok {
 		return nil, nil, err
 	}
 	return token, claims, nil
