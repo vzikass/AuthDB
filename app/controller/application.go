@@ -91,7 +91,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		a.LoginPage(w, "Incorrect password")
 		return
 	}
-	token, err := utils.GenerateToken(user.Login)
+	token, err := utils.GenerateJWT(user.Login)
 	if err != nil{
 		log.Fatalf("Error generate token: %v", err)
 		return

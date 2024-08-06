@@ -1,21 +1,32 @@
 package utils
 
 import (
-	"fmt"
+	"os"
+	"time"
 
-	"golang.org/x/crypto/bcrypt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
+var jwtSecret = []byte(os.Getenv("JWT_SECRET_KEY"))
 
-const maxPasswordLength = 72
+func GenerateJWT(userID string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userID": userID,
+		"exp":    time.Now().Add(1 * time.Hour).Unix(),
+	})
+	return token.SignedString(jwtSecret)
+}
 
-func GenerateToken(password string) (string, error) {
-	if len(password) > maxPasswordLength {
-		return "", fmt.Errorf("password length exceeds %d bytes", maxPasswordLength)
+func ParseJWT(tokenString string) (*jwt.Token, *jwt.MapClaims, error){
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(t *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+	if err != nil{
+		return nil, nil, err
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", fmt.Errorf("generate hash token: %w", err)
+	claims, ok := token.Claims.(*jwt.MapClaims)
+	if !ok{
+		return nil, nil, err
 	}
-	return string(hashedPassword), nil
+	return token, claims, nil
 }

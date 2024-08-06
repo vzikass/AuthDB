@@ -16,7 +16,7 @@ func main() {
 	ctx := context.Background()
 
 	// Load from .env file
-	if err := godotenv.Load("db.env"); err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Failed to load .env file: %v", err)
 	}
 	dbURL, exist := os.LookupEnv("DATABASE_URL")
