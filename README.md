@@ -16,6 +16,7 @@
 + Docker image and containers.
 + Kubernetes([minikube](https://kubernetes.io/docs/tutorials/hello-minikube/))
 + CI/CD (Github Actions)
++ Unit testing
   
 And other things I've encountered in the writing process.
 
