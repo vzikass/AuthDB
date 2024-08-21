@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"AuthDB/app/repository"
+	"AuthDB/cmd/app/repository"
 	"html/template"
 	"net/http"
 	"path/filepath"
@@ -12,7 +12,8 @@ import (
 )
 
 func GetAllUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	users, err := repository.GetAllUsers()
+	ctx := context.Background()
+	users, err := repository.GetAllUsers(ctx, nil)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return
@@ -45,7 +46,7 @@ func AddUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		http.Error(w, "Error creating user", http.StatusInternalServerError)
 		return
 	}
-	err = user.Add(ctx)
+	err = user.Add(ctx, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}

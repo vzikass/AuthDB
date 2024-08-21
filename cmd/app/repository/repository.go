@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -15,24 +16,47 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-func (r *Repository) Login(ctx context.Context, login string) (u User, err error) {
-	row := r.pool.QueryRow(ctx, `select id, login, password, email from users where login = $1`,
-		login)
-	err = row.Scan(&u.ID, &u.Login, &u.Password, &u.Email)
+func (r *Repository) Login(ctx context.Context, tx pgx.Tx, login string) (u User, err error) {
+	query := `select id, login, password, email from users where login = $1`
+	if tx != nil {
+		err = tx.QueryRow(ctx, query, login).Scan(&u.ID, &u.Login, &u.Password, &u.Email)
+	} else {
+		err = r.pool.QueryRow(ctx, query, login).Scan(&u.ID, &u.Login, &u.Password, &u.Email)
+	}
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return u, nil
+		}
 		return u, fmt.Errorf("failed to query data: %v", err)
 	}
 	return u, nil
 }
 
-func (r *Repository) UserExist(ctx context.Context, login, email string) (exist bool, err error) {
+func (r *Repository) UserExist(ctx context.Context, tx pgx.Tx, login, email string) (exist bool, err error) {
 	var count int
-	err = r.pool.QueryRow(ctx, `select count(*) from users where login = $1 or email = $2`,
-		login, email).Scan(&count)
+	query := `select count(*) from users where login = $1 or email = $2`
+	if tx != nil {
+		err = tx.QueryRow(ctx, query, login, email).Scan(&count)
+	} else {
+		err = r.pool.QueryRow(ctx, query, login, email).Scan(&count)
+	}
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 	return count > 0, nil
+}
+
+func (r *Repository) GetByID(ctx context.Context, tx pgx.Tx, id int) (user User, err error) {
+	query := `select * from users where id = $1`
+	if tx != nil {
+		err = tx.QueryRow(ctx, query, id).Scan(&user.ID, &user.Login, &user.Email, &user.Password)
+	} else {
+		err = r.pool.QueryRow(ctx, query, id).Scan(&user.ID, &user.Login, &user.Email, &user.Password)
+	}
+	if err != nil {
+		return user, err
+	}
+	return user, nil
 }
 
 func (r *Repository) DeleteUserByID(ctx context.Context, id int) error {

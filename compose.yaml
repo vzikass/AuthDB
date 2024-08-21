@@ -1,40 +1,89 @@
 version: '3.8'
 
 services:
-  db:
+  maindb:
     image: postgres
+    container_name: maindb
     ports:
       - "5432:5432"
     environment:
+      POSTGRES_HOST_AUTH_METHOD: md5
+      PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 193566
       POSTGRES_DB: AuthDB
+    volumes:
+      - maindb_data:/var/lib/postgresql/data
+      - ./migrations/20240807182800_createmaindb.sql:/docker-entrypoint-initdb.d/20240807182800_createmaindb.sql
+      - ./pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 5s
-    volumes:
-      - ./initdb:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - mynetwork
 
   web:
+    image: myapp
+    container_name: web
     build: .
     ports:
       - "4444:4444"
     environment:
-      DATABASE_URL: postgres://postgres:193566@db:5432/AuthDB?sslmode=disable
+      DATABASE_URL: postgres://postgres:193566@maindb:5432/AuthDB?sslmode=disable
+      TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb?sslmode=disable
     depends_on:
-      db:
+      maindb: 
         condition: service_healthy
-    volumes:
-      - /Users/vyacheslavivkin/Desktop/dev/go/AuthDB/db.env:/app/db.env
+      testdb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - mynetwork
 
-  tests:
-    build: .
-    command: go test ./...
+  testdb:
+    image: postgres
+    container_name: testdb
+    ports:
+      - "5433:5432"
     environment:
-      DATABASE_URL: postgres://postgres:193566@db:5432/AuthDB?sslmode=disable
+      POSTGRES_HOST_AUTH_METHOD: md5
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 193566
+      POSTGRES_DB: testdb
+    volumes:
+      - testdb_data:/var/lib/postgresql/data
+      - ./migrations/20240807194809_createtestdb.sql:/docker-entrypoint-initdb.d/20240807194809_createtestdb.sql
+      - ./pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+    restart: unless-stopped
+    networks:
+      - mynetwork
+      
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
     depends_on:
-      db:
-        condition: service_healthy
+      - testdb
+    environment:
+      TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb?sslmode=disable
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  maindb_data:
+  testdb_data:

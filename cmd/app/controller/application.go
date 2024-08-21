@@ -2,7 +2,7 @@ package controller
 
 import (
 	"context"
-	"AuthDB/app/repository"
+	"AuthDB/cmd/app/repository"
 	"AuthDB/utils"
 	"fmt"
 	"html/template"
@@ -82,7 +82,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		a.LoginPage(w, "You must provide a login and password")
 		return
 	}
-	user, err := a.repo.Login(a.ctx, login)
+	user, err := a.repo.Login(a.ctx, nil, login)
 	if err != nil {
 		a.LoginPage(w, "User not found")
 		return
@@ -154,7 +154,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		a.SignupPage(w, "Minimum field length - 4 characters")
 		return
 	}
-	userExist, err := a.repo.UserExist(a.ctx, login, email)
+	userExist, err := a.repo.UserExist(a.ctx, nil, login, email)
 	if err != nil {
 		a.SignupPage(w, "Error checking existing user")
 		return
@@ -171,7 +171,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 			errCh <- err
 			return
 		}
-		err = user.Add(a.ctx)
+		err = user.Add(a.ctx, nil)
 		if err != nil {
 			errCh <- err
 			return
@@ -402,5 +402,5 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 			http.Error(w, "No valid update data provided", http.StatusBadRequest)
 			return
 		}
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		// http.Redirect(w, r, "/", http.StatusSeeOther)
 }

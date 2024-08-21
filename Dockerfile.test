@@ -1,0 +1,12 @@
+FROM golang:1.22 as test
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . ./
+COPY db.env /app/db.env
+# Setting environment variables from db.env
+ENV $(cat /app/db.env | xargs)
+
+CMD ["go", "test", "-timeout", "30s", "./..."]
+# CMD ["dockerize", "-wait", "tcp://testdb:5432", "-timeout", "60s", "go", "test", "-timeout", "30s", "./..."]
