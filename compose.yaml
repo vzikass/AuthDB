@@ -45,7 +45,7 @@ services:
       - mynetwork
 
   testdb:
-    image: postgres
+    image: postgres:latest
     container_name: testdb
     ports:
       - "5433:5432"
@@ -70,11 +70,14 @@ services:
       - mynetwork
       
   test:
+    container_name: test
+    image: test
     build:
       context: .
       dockerfile: Dockerfile.test
     depends_on:
-      - testdb
+      testdb:
+        condition: service_healthy
     environment:
       TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb?sslmode=disable
     networks:

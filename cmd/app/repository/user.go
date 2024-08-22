@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type User struct {
@@ -14,7 +13,6 @@ type User struct {
 	Login    string `json:"login" db:"login"`
 	Password string `json:"password" db:"password"`
 	Email    string `json:"email" db:"email"`
-	Dbpool   *pgxpool.Pool
 }
 
 var (
@@ -31,7 +29,6 @@ func NewUser(login, email, password string) (*User, error) {
 		Login:    login,
 		Email:    email,
 		Password: hashedPassword,
-		Dbpool:   TestDbpool, 
 	}
 	return user, nil
 }
@@ -72,7 +69,7 @@ func (u *User) Add(ctx context.Context, tx pgx.Tx) (err error) {
 		_, err := tx.Exec(ctx, "INSERT INTO users (login, email, password) VALUES ($1, $2, $3)", u.Login, u.Email, u.Password)
 		return err
 	} else {
-		_, err := u.Dbpool.Exec(ctx, "INSERT INTO users (login, email, password) VALUES ($1, $2, $3)", u.Login, u.Email, u.Password)
+		_, err := Dbpool.Exec(ctx, "INSERT INTO users (login, email, password) VALUES ($1, $2, $3)", u.Login, u.Email, u.Password)
 		return err
 	}
 }
