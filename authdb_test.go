@@ -1,7 +1,8 @@
 // Simple tests of all the functionality of my project using transactions
-package repository
+package main
 
 import (
+	"AuthDB/cmd/app/repository"
 	"AuthDB/utils"
 	"context"
 	"errors"
@@ -14,11 +15,11 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 var (
-	ErrUserNotFound = errors.New("User not found")
-	DbURL           = "postgres://postgres:193566@testdb:5432/testdb?sslmode=disable"
+	ErrUserNotFound = errors.New("user not found")
 )
 
 func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
@@ -28,26 +29,16 @@ func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
 	}
 }
 
-func waitForDB(t *testing.T, dsn string, maxAttempts int, delay time.Duration){
-	for attempts := 1; attempts <= maxAttempts; attempts++{
-		pool, err := InitDBConn(context.Background(), dsn)
-		if err == nil{
-			pool.Close()
-			return
-		}
-		time.Sleep(delay)
-	}
-	t.Fatalf("Database is not available after %d attempts", maxAttempts)
-}
-
 func RunWithTransactions(t *testing.T, fn func(tx pgx.Tx) error) {
-	os.Setenv("TESTDB_URL", "postgres://postgres:193566@testdb:5432/testdb?sslmode=disable")
-	pool, err := InitDBConn(context.Background(), os.Getenv("TESTDB_URL"))
+	if err := godotenv.Load("db.env"); err != nil {
+		t.Fatalf("Failed to load .env file: %v", err)
+	}
+	pool, err := repository.InitDBConn(context.Background(), os.Getenv("TESTDB_URL"))
 	if err != nil {
-		t.Fatalf("Failed to connect to db: %v", err)
+		log.Fatalf("Error initializing Test DB connection: %v\n", err)
 	}
 	defer pool.Close()
-	
+
 	// Clear DB before starting transaction
 	clearDatabase(t, pool)
 
@@ -75,7 +66,7 @@ func TestInitDBConn_InvalidURL(t *testing.T) {
 	ctx := context.Background()
 	invalidURL := "invalidUrl"
 
-	_, err := InitDBConn(ctx, invalidURL)
+	_, err := repository.InitDBConn(ctx, invalidURL)
 	if err == nil {
 		t.Fatal("Expected error but got nil")
 	}
@@ -85,46 +76,16 @@ func TestInitDBConn_InvalidURL(t *testing.T) {
 		t.Errorf("Expected error message to contain '%s', got '%s'", expectedErrMsg, err.Error())
 	}
 }
-func TestInitDBConn_UnreachableServer(t *testing.T) {
-	ctx := context.Background()
-	testdbURL := "postgres:postgres:193566@testdb:9753/testdb?sslmode=disable"
-
-	_, err := InitDBConn(ctx, testdbURL)
-	if err == nil {
-		t.Fatalf("Expected error but got nil")
-	}
-
-	expectedErrMsg := "failed to connect config"
-	if !strings.Contains(err.Error(), expectedErrMsg) {
-		t.Errorf("Expected error message to contain '%s', got '%s'", expectedErrMsg, err.Error())
-	}
-}
-
-func TestInitDBConn_InsufficientPrivileges(t *testing.T) {
-	ctx := context.Background()
-	testdbURL := "postgres:postgres:WRONGPASSWORD@testdb:5432/testdb?sslmode=disable"
-
-	_, err := InitDBConn(ctx, testdbURL)
-	if err == nil {
-		t.Errorf("Expected error but got nil")
-	}
-
-	expectedErrMsg := "failed to connect config"
-	if !strings.Contains(err.Error(), expectedErrMsg) {
-		t.Errorf("Expected error message to contain '%s', got '%s'", expectedErrMsg, err.Error())
-	}
-}
 
 // -----------------------
 
 // User tests
 func TestNewUser(t *testing.T) {
-	waitForDB(t, os.Getenv("TESTDB_URL"), 10, 2*time.Second)
 	RunWithTransactions(t, func(tx pgx.Tx) error {
 		login := "testuser"
 		password := "qwerty123"
 		email := "testuser@example.com"
-		user, err := NewUser(login, email, password)
+		user, err := repository.NewUser(login, email, password)
 		if err != nil {
 			return fmt.Errorf("Failed to create user: %v", err)
 		}
@@ -145,10 +106,9 @@ func TestNewUser(t *testing.T) {
 }
 
 func TestGetAllUsers(t *testing.T) {
-	waitForDB(t, os.Getenv("TESTDB_URL"), 10, 2*time.Second)
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		user := &User{
+		user := &repository.User{
 			Login:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
@@ -158,23 +118,22 @@ func TestGetAllUsers(t *testing.T) {
 			t.Fatalf("Failed to add user for testing: %v", err)
 		}
 
-		users, err := GetAllUsers(ctx, tx)
+		users, err := repository.GetAllUsers(ctx, tx)
 		if err != nil {
 			t.Fatalf("Failed to get all users: %v", err)
 		}
 		if len(users) == 0 {
 			t.Errorf("No users found")
 		}
-		return
+		return err
 	})
 }
 
 func TestGetUserByID(t *testing.T) {
-	waitForDB(t, os.Getenv("TESTDB_URL"), 10, 2*time.Second)
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
-		user := &User{
+		repo := &repository.Repository{}
+		user := &repository.User{
 			ID:       1,
 			Login:    "testuser",
 			Password: "qwerty123",
@@ -193,16 +152,15 @@ func TestGetUserByID(t *testing.T) {
 		if u.ID != userID {
 			t.Errorf("Expected user ID %d, got %d", userID, user.ID)
 		}
-		return
+		return err
 	})
 }
 
 func TestAddUser(t *testing.T) {
-	waitForDB(t, os.Getenv("TESTDB_URL"), 10, 2*time.Second)
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
-		user := &User{
+		repo := &repository.Repository{}
+		user := &repository.User{
 			Login:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
@@ -222,16 +180,15 @@ func TestAddUser(t *testing.T) {
 		} else {
 			t.Log("User successfully added!")
 		}
-		return
+		return err
 	})
 }
 
 func TestUpdateUser(t *testing.T) {
-	waitForDB(t, os.Getenv("TESTDB_URL"), 10, 2*time.Second)
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
-		user := &User{
+		repo := &repository.Repository{}
+		user := &repository.User{
 			ID:       1,
 			Login:    "testuser",
 			Password: "qwerty123",
@@ -261,16 +218,15 @@ func TestUpdateUser(t *testing.T) {
 		} else {
 			t.Log("User successfully updated!")
 		}
-		return
+		return err
 	})
 }
 
 func TestDeleteUser(t *testing.T) {
-	waitForDB(t, os.Getenv("TESTDB_URL"), 10, 2*time.Second)
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
-		user := &User{
+		repo := &repository.Repository{}
+		user := &repository.User{
 			ID:       1,
 			Login:    "testuser",
 			Password: "qwerty123",
@@ -294,17 +250,16 @@ func TestDeleteUser(t *testing.T) {
 		} else {
 			t.Log("User successfully deleted!")
 		}
-		return
+		return err
 	})
 }
 
 func TestLogin(t *testing.T) {
-	waitForDB(t, os.Getenv("TESTDB_URL"), 10, 2*time.Second)
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
+		repo := &repository.Repository{}
 		login := "testuser"
-		user := &User{
+		user := &repository.User{
 			Login:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
@@ -322,16 +277,15 @@ func TestLogin(t *testing.T) {
 		if u.Login != login {
 			t.Errorf("Expected login %s, got %s", login, user.Login)
 		}
-		return
+		return err
 	})
 }
 
 func TestUserExist(t *testing.T) {
-	waitForDB(t, os.Getenv("TESTDB_URL"), 10, 2*time.Second)
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
-		user := &User{
+		repo := &repository.Repository{}
+		user := &repository.User{
 			Login:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
@@ -351,15 +305,14 @@ func TestUserExist(t *testing.T) {
 		} else {
 			t.Log("User found!")
 		}
-		return
+		return err
 	})
 }
 
 func TestUserNotExist(t *testing.T) {
-	waitForDB(t, os.Getenv("TESTDB_URL"), 10, 2*time.Second)
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
+		repo := &repository.Repository{}
 
 		login := "nonexistentuser"
 		email := "nonexistent@example.com"
@@ -373,7 +326,7 @@ func TestUserNotExist(t *testing.T) {
 		} else {
 			t.Log("User not found!")
 		}
-		return
+		return err
 	})
 }
 

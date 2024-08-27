@@ -28,24 +28,10 @@ func main() {
 		log.Fatalf("Error initializing DB connection: %v\n", err)
 	}
 
-	// Connect test DB
-	TestDbpool, err := repository.InitDBConn(ctx, os.Getenv("TESTDB_URL"))
-	if err != nil {
-		log.Fatalf("Error initializing Test DB connection: %v\n", err)
-	}
-
 	// Main app
 	app := controller.NewApp(ctx, Dbpool)
 	mainRouter := httprouter.New()
 	app.Routes(mainRouter)
-
-	// Test app
-	testApp := controller.NewApp(ctx, TestDbpool)
-	testRouter := httprouter.New()
-	testApp.Routes(testRouter)
-
-	// Migratoins
-	// runMigrations(os.Getenv("TESTDB_URL"))
 
 	// Start main app
 	wg.Add(1)
@@ -56,17 +42,5 @@ func main() {
 		}
 		defer wg.Done()
 	}()
-	// Start test server
-	wg.Add(1)
-	go func() {
-		log.Println("Starting test HTTP server on port 4445")
-		err := http.ListenAndServe("0.0.0.0:4445", testRouter)
-		if err != nil {
-			log.Fatalf("Test server failed: %v", err)
-		}
-		log.Println("Test server stopped")
-		defer wg.Done()
-	}()
-
 	wg.Wait()
 }

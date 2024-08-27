@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   maindb:
-    image: postgres
+    image: postgres:latest
     container_name: maindb
     ports:
       - "5432:5432"
@@ -33,8 +33,8 @@ services:
     ports:
       - "4444:4444"
     environment:
-      DATABASE_URL: postgres://postgres:193566@maindb:5432/AuthDB?sslmode=disable
-      TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb?sslmode=disable
+      DATABASE_URL: postgres://postgres:193566@maindb:5432/AuthDB
+      TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb
     depends_on:
       maindb: 
         condition: service_healthy
@@ -62,8 +62,8 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
-      retries: 5
-      start_period: 30s
+      retries: 6
+      start_period: 25s
       timeout: 5s
     restart: unless-stopped
     networks:
@@ -79,7 +79,9 @@ services:
       testdb:
         condition: service_healthy
     environment:
-      TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb?sslmode=disable
+      TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb
+    # commands to keep the test container running 
+    # command: ["sh", "-c", "tail -f /dev/null"] 
     networks:
       - mynetwork
 

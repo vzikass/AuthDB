@@ -40,6 +40,7 @@ require (
 	github.com/jackc/pgproto3/v2 v2.3.3 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgtype v1.14.3 // indirect
+	github.com/jackc/pgx v3.6.2+incompatible // indirect
 	github.com/jackc/pgx/v5 v5.6.0 // indirect
 	github.com/jackc/puddle v1.3.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
