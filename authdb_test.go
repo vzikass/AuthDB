@@ -8,18 +8,17 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/joho/godotenv"
 )
 
 var (
 	ErrUserNotFound = errors.New("user not found")
+	dbURL           = "postgres://postgres:193566@testdb:5432/testdb"
 )
 
 func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
@@ -30,10 +29,7 @@ func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
 }
 
 func RunWithTransactions(t *testing.T, fn func(tx pgx.Tx) error) {
-	if err := godotenv.Load("db.env"); err != nil {
-		t.Fatalf("Failed to load .env file: %v", err)
-	}
-	pool, err := repository.InitTestDBConn(context.Background(), os.Getenv("TESTDB_URL"))
+	pool, err := repository.InitDBConn(context.Background(), dbURL)
 	if err != nil {
 		log.Fatalf("Error initializing Test DB connection: %v\n", err)
 	}

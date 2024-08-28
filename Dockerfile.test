@@ -10,13 +10,13 @@ COPY db.env /app/db.env
 
 
 # Setting environment variables from db.env
-ENV $(cat /app/db.env | xargs)
+# ENV $(cat /app/db.env | xargs)
 
-ENV DB_HOST=testdb
-ENV DB_PORT=5433
-ENV DB_USER=postgres
-ENV DB_PASSWORD=193566
-ENV DB_NAME=testdb
+# ENV DB_HOST=testdb
+# ENV DB_PORT=5433
+# ENV DB_USER=postgres
+# ENV DB_PASSWORD=193566
+# ENV DB_NAME=testdb
     
 RUN sleep 10
 

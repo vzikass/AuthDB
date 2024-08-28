@@ -63,7 +63,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       retries: 6
-      start_period: 25s
+      start_period: 30s
       timeout: 5s
     restart: unless-stopped
     networks:
@@ -78,8 +78,10 @@ services:
     depends_on:
       testdb:
         condition: service_healthy
-    environment:
-      TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb
+      maindb:
+        condition: service_healthy
+    # environment:
+      # TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb
     # commands to keep the test container running 
     command: ["sh", "-c", "tail -f /dev/null"] 
     networks:
