@@ -40,7 +40,22 @@ func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err er
 		err = fmt.Errorf("failed to connect config: %w", err)
 		return
 	}
-	TestDbpool = dbpool
+	// TestDbpool = dbpool
 	Dbpool = dbpool
+	return
+}
+
+func InitTestDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err error) {
+	cfg, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		err = fmt.Errorf("failed to parse pg config: %v", err)
+		return
+	}
+	dbpool, err = pgxpool.ConnectConfig(ctx, cfg)
+	if err != nil {
+		err = fmt.Errorf("failed to connect config: %w", err)
+		return
+	}
+	TestDbpool = dbpool
 	return
 }

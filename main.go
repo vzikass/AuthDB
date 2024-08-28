@@ -22,14 +22,14 @@ func main() {
 		log.Fatalf("Failed to load db.env: %v", err)
 	}
 
-	// Connect main db 
-	Dbpool, err := repository.InitDBConn(ctx, os.Getenv("DATABASE_URL"))
+	// Connect db 
+	dbpool, err := repository.InitDBConn(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalf("Error initializing DB connection: %v\n", err)
 	}
 
 	// Main app
-	app := controller.NewApp(ctx, Dbpool)
+	app := controller.NewApp(ctx, dbpool)
 	mainRouter := httprouter.New()
 	app.Routes(mainRouter)
 
@@ -44,7 +44,3 @@ func main() {
 	}()
 	wg.Wait()
 }
-
-// Не знаю как решить проблему с подлкючением к testdb, при сборке через докер тесты отрабатывают с кодом 0, сеть докера настроена правильно,
-// строка dsn и вида url правильная, по логам миграции выполняются, могу подключиться к бд через контейнер с той же строкой. 
-// транзакции выполняются

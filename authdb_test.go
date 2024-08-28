@@ -33,7 +33,7 @@ func RunWithTransactions(t *testing.T, fn func(tx pgx.Tx) error) {
 	if err := godotenv.Load("db.env"); err != nil {
 		t.Fatalf("Failed to load .env file: %v", err)
 	}
-	pool, err := repository.InitDBConn(context.Background(), os.Getenv("TESTDB_URL"))
+	pool, err := repository.InitTestDBConn(context.Background(), os.Getenv("TESTDB_URL"))
 	if err != nil {
 		log.Fatalf("Error initializing Test DB connection: %v\n", err)
 	}
