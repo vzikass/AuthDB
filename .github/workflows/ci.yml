@@ -41,7 +41,7 @@ jobs:
     
     - name: Build and Run Tests in Docker
       run: |
-        docker-compose -f docker-compose.yaml up -d maindb testdb
+        docker-compose -f compose.yaml up -d maindb testdb
         docker-compose run test go test -v ./...
         docker-compose down
 
