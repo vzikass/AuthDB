@@ -3,10 +3,23 @@ WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN go mod download
+
 COPY . ./
 COPY db.env /app/db.env
+# RUN apt-get update && apt-get install -y dockerize
+
+
 # Setting environment variables from db.env
-ENV $(cat /app/db.env | xargs)
+# ENV $(cat /app/db.env | xargs)
+
+# ENV DB_HOST=testdb
+# ENV DB_PORT=5433
+# ENV DB_USER=postgres
+# ENV DB_PASSWORD=193566
+# ENV DB_NAME=testdb
+    
+RUN sleep 10
 
 CMD ["go", "test", "-timeout", "30s", "./..."]
-# CMD ["dockerize", "-wait", "tcp://testdb:5432", "-timeout", "60s", "go", "test", "-timeout", "30s", "./..."]
+# CMD ["dockerize", "-wait", "tcp://testdb:5432", "-timeout", "90s", "go", "test", "-timeout", "60s", "./..."]
+

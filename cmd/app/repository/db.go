@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"net"
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	_ "github.com/lib/pq"
 )
 
 var Dbpool *pgxpool.Pool
@@ -19,7 +19,7 @@ func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err er
 		return
 	}
 	// MaxConns is the maximum size of the pool
-	cfg.MaxConns = int32(5)
+	cfg.MaxConns = int32(10)
 	cfg.MinConns = int32(1)
 	// HealthCheckPeriod is the duration between checks of the health of idle connections.
 	cfg.HealthCheckPeriod = 1 * time.Minute
@@ -30,17 +30,17 @@ func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err er
 	cfg.ConnConfig.ConnectTimeout = 5 * time.Second
 
 	// Cfg struct with keepalive and timeout fields
-	cfg.ConnConfig.DialFunc = (&net.Dialer{
-		KeepAlive: cfg.HealthCheckPeriod,
-		Timeout:   cfg.ConnConfig.ConnectTimeout,
-	}).DialContext
+	// cfg.ConnConfig.DialFunc = (&net.Dialer{
+	// 	KeepAlive: cfg.HealthCheckPeriod,
+	// 	Timeout:   cfg.ConnConfig.ConnectTimeout,
+	// }).DialContext
 
 	dbpool, err = pgxpool.ConnectConfig(ctx, cfg)
 	if err != nil {
 		err = fmt.Errorf("failed to connect config: %w", err)
 		return
 	}
-	Dbpool = dbpool
 	TestDbpool = dbpool
+	Dbpool = dbpool
 	return
 }

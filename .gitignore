@@ -1,2 +1,3 @@
 README.Docker.md
-jwt.env
+# *.env
+*.conf

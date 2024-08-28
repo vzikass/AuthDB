@@ -231,7 +231,7 @@ func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 }
 
 func (a *App) HomePage(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	path := filepath.Join("public", "html", "index.html")
+	path := filepath.Join("public", "html", "main.html")
 	path2 := filepath.Join("public", "html", "delete.html")
 	path3 := filepath.Join("public", "html", "update.html")
 	tmpl, err := template.ParseFiles(path, path2, path3)

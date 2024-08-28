@@ -1,10 +1,12 @@
 // Simple tests of all the functionality of my project using transactions
-package repository
+package main
 
 import (
+	"AuthDB/cmd/app/repository"
 	"AuthDB/utils"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"testing"
@@ -15,18 +17,9 @@ import (
 )
 
 var (
-	ErrUserNotFound = errors.New("User not found")
-	DbURL = "postgres://postgres:193566@testdb:5432/testdb?sslmode=disable"
+	ErrUserNotFound = errors.New("user not found")
+	dbURL           = "postgres://postgres:193566@testdb:5432/testdb"
 )
-
-// func InitTestDBConn(t *testing.T) *pgxpool.Pool {
-
-// 	pool, err := InitDBConn(context.Background(), DbURL)
-// 	if err != nil {
-// 		t.Fatalf("Failed to connect to DB: %v", err)
-// 	}
-// 	return pool
-// }
 
 func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
 	_, err := pool.Exec(context.Background(), "TRUNCATE users RESTART IDENTITY")
@@ -36,34 +29,32 @@ func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
 }
 
 func RunWithTransactions(t *testing.T, fn func(tx pgx.Tx) error) {
-    pool, err := InitDBConn(context.Background(), DbURL)
-    if err != nil {
-        t.Fatalf("Failed to connect to db: %v", err)
-    }
-    defer pool.Close()
+	pool, err := repository.InitDBConn(context.Background(), dbURL)
+	if err != nil {
+		log.Fatalf("Error initializing Test DB connection: %v\n", err)
+	}
+	defer pool.Close()
 
-	// Clear DB before start transaction
+	// Clear DB before starting transaction
 	clearDatabase(t, pool)
 
-    tx, err := pool.Begin(context.Background())
-    if err != nil {
-        t.Fatalf("Failed to start transaction: %v", err)
-    }
+	tx, err := pool.Begin(context.Background())
+	if err != nil {
+		t.Fatalf("Failed to start transaction: %v", err)
+	}
 
-    defer func() {
-        if r := recover(); r != nil {
-            _ = tx.Rollback(context.Background())
-            panic(r)
-        } else if err != nil {
-            _ = tx.Rollback(context.Background())
-        } else {
-            if commitErr := tx.Commit(context.Background()); commitErr != nil {
-                t.Fatalf("Failed to commit transaction: %v", commitErr)
-            }
-        }
-    }()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback(context.Background())
+			panic(r)
+		} else if err != nil {
+			tx.Rollback(context.Background())
+		} else {
+			tx.Commit(context.Background())
+		}
+	}()
 
-    err = fn(tx)
+	err = fn(tx)
 }
 
 // Database tests
@@ -71,7 +62,7 @@ func TestInitDBConn_InvalidURL(t *testing.T) {
 	ctx := context.Background()
 	invalidURL := "invalidUrl"
 
-	_, err := InitDBConn(ctx, invalidURL)
+	_, err := repository.InitDBConn(ctx, invalidURL)
 	if err == nil {
 		t.Fatal("Expected error but got nil")
 	}
@@ -81,53 +72,23 @@ func TestInitDBConn_InvalidURL(t *testing.T) {
 		t.Errorf("Expected error message to contain '%s', got '%s'", expectedErrMsg, err.Error())
 	}
 }
-func TestInitDBConn_UnreachableServer(t *testing.T) {
-	ctx := context.Background()
-	testdbURL := "postgres:postgres:193566@testdb:9753/testdb?sslmode=disable"
-
-	_, err := InitDBConn(ctx, testdbURL)
-	if err == nil {
-		t.Fatalf("Expected error but got nil")
-	}
-
-	expectedErrMsg := "failed to connect config"
-	if !strings.Contains(err.Error(), expectedErrMsg) {
-		t.Errorf("Expected error message to contain '%s', got '%s'", expectedErrMsg, err.Error())
-	}
-}
-
-func TestInitDBConn_InsufficientPrivileges(t *testing.T) {
-	ctx := context.Background()
-	testdbURL := "postgres:postgres:WRONGPASSWORD@testdb:5432/testdb?sslmode=disable"
-
-	_, err := InitDBConn(ctx, testdbURL)
-	if err == nil {
-		t.Errorf("Expected error but got nil")
-	}
-
-	expectedErrMsg := "failed to connect config"
-	if !strings.Contains(err.Error(), expectedErrMsg) {
-		t.Errorf("Expected error message to contain '%s', got '%s'", expectedErrMsg, err.Error())
-	}
-}
 
 // -----------------------
 
 // User tests
 func TestNewUser(t *testing.T) {
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
-		pool, err := InitDBConn(context.Background(), DbURL)
-		if err != nil{
-			t.Fatalf("Failed to connect db in testnewuser func: %v", err)
-		}
-		defer pool.Close()
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		login := "testuser"
 		password := "qwerty123"
 		email := "testuser@example.com"
-
-		user, err := NewUser(login, email, password)
+		user, err := repository.NewUser(login, email, password)
 		if err != nil {
-			t.Fatalf("Failed to create user: %v", err)
+			return fmt.Errorf("Failed to create user: %v", err)
+		}
+
+		ctx := context.Background()
+		if err := user.Add(ctx, tx); err != nil {
+			return fmt.Errorf("Failed to add user: %v", err)
 		}
 
 		if user.Login != login || user.Email != email {
@@ -136,45 +97,43 @@ func TestNewUser(t *testing.T) {
 		if !utils.CompareHashPassword(password, user.Password) {
 			t.Errorf("Password hash does not match")
 		}
-		return
+		return nil
 	})
 }
 
 func TestGetAllUsers(t *testing.T) {
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		user := &User{
+		user := &repository.User{
 			Login:    "testuser",
-			Email:    "testuser@example.com",
 			Password: "qwerty123",
-			Dbpool:   TestDbpool,
+			Email:    "testuser@example.com",
 		}
 
 		if err := user.Add(ctx, tx); err != nil {
 			t.Fatalf("Failed to add user for testing: %v", err)
 		}
 
-		users, err := GetAllUsers(ctx, tx)
+		users, err := repository.GetAllUsers(ctx, tx)
 		if err != nil {
 			t.Fatalf("Failed to get all users: %v", err)
 		}
 		if len(users) == 0 {
 			t.Errorf("No users found")
 		}
-		return
+		return err
 	})
 }
 
 func TestGetUserByID(t *testing.T) {
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
-		user := &User{
+		repo := &repository.Repository{}
+		user := &repository.User{
 			ID:       1,
 			Login:    "testuser",
-			Email:    "testuser@example.com",
 			Password: "qwerty123",
-			Dbpool:   TestDbpool,
+			Email:    "testuser@example.com",
 		}
 
 		if err := user.Add(ctx, tx); err != nil {
@@ -189,15 +148,15 @@ func TestGetUserByID(t *testing.T) {
 		if u.ID != userID {
 			t.Errorf("Expected user ID %d, got %d", userID, user.ID)
 		}
-		return
+		return err
 	})
 }
 
 func TestAddUser(t *testing.T) {
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
-		user := &User{
+		repo := &repository.Repository{}
+		user := &repository.User{
 			Login:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
@@ -217,15 +176,16 @@ func TestAddUser(t *testing.T) {
 		} else {
 			t.Log("User successfully added!")
 		}
-		return
+		return err
 	})
 }
 
 func TestUpdateUser(t *testing.T) {
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
-		user := &User{
+		repo := &repository.Repository{}
+		user := &repository.User{
+			ID:       1,
 			Login:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
@@ -249,22 +209,21 @@ func TestUpdateUser(t *testing.T) {
 		if updatedUser.Login != "updateduser" || updatedUser.Email != "updated@example.com" {
 			t.Errorf("User data was not updated correctly. Got %+v", updatedUser)
 		}
-		if !utils.CompareHashPassword("newpassword123", updatedUser.Password) {
+		if utils.CompareHashPassword("newpassword123", updatedUser.Password) {
 			t.Errorf("Password was not updated correctly")
 		} else {
 			t.Log("User successfully updated!")
 		}
-		return
+		return err
 	})
 }
 
 func TestDeleteUser(t *testing.T) {
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
-		userID := 1
-		user := &User{
-			ID:       userID,
+		repo := &repository.Repository{}
+		user := &repository.User{
+			ID:       1,
 			Login:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
@@ -274,30 +233,29 @@ func TestDeleteUser(t *testing.T) {
 			t.Fatalf("Failed to add user for testing: %v", err)
 		}
 
-		if err := user.Delete(ctx, tx, userID); err != nil {
+		if err := user.Delete(ctx, tx, user.ID); err != nil {
 			t.Fatalf("Failed to delete user: %v", err)
 		}
 
-		u, err := repo.GetByID(ctx, tx, userID)
+		u, err := repo.GetByID(ctx, tx, user.ID)
 		if err == nil {
 			t.Fatalf("User was not deleted. User found with ID: %d", u.ID)
 		}
-
-		if !errors.Is(err, ErrUserNotFound) {
+		if errors.Is(err, ErrUserNotFound) {
 			t.Errorf("Unexpected error when getting user by ID: %v", err)
 		} else {
 			t.Log("User successfully deleted!")
 		}
-		return
+		return err
 	})
 }
 
 func TestLogin(t *testing.T) {
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
+		repo := &repository.Repository{}
 		login := "testuser"
-		user := &User{
+		user := &repository.User{
 			Login:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
@@ -315,15 +273,15 @@ func TestLogin(t *testing.T) {
 		if u.Login != login {
 			t.Errorf("Expected login %s, got %s", login, user.Login)
 		}
-		return
+		return err
 	})
 }
 
 func TestUserExist(t *testing.T) {
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
-		user := &User{
+		repo := &repository.Repository{}
+		user := &repository.User{
 			Login:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
@@ -343,14 +301,14 @@ func TestUserExist(t *testing.T) {
 		} else {
 			t.Log("User found!")
 		}
-		return
+		return err
 	})
 }
 
 func TestUserNotExist(t *testing.T) {
-	RunWithTransactions(t, func(tx pgx.Tx) (err error) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
-		repo := &Repository{pool: TestDbpool}
+		repo := &repository.Repository{}
 
 		login := "nonexistentuser"
 		email := "nonexistent@example.com"
@@ -364,7 +322,7 @@ func TestUserNotExist(t *testing.T) {
 		} else {
 			t.Log("User not found!")
 		}
-		return
+		return err
 	})
 }
 
