@@ -16,7 +16,7 @@
 + Docker image and containers.
 + Kubernetes([minikube](https://kubernetes.io/docs/tutorials/hello-minikube/))
 + CI/CD (Github Actions)
-+ Unit testing
++ Testing
   
 And other things I've encountered in the writing process.
 
@@ -62,7 +62,7 @@ Application will be available at [localhost:4444](http://localhost:4444)
 
 ## Contributing
 Bug reports and/or pull requests are welcome!\
-*I leave here my contact in telegram for communication(ru, en) - **https://t.me/vzikass***
+*I leave here my contact in telegram for communication(ru, en) - :point_right: [tg](https://t.me/vzikass)
 
 ## License
 The module is available as open source under the terms of the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
