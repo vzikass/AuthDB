@@ -71,7 +71,7 @@ You can check it :point_right: [here](https://github.com/vzikass/AuthDB/blob/mai
 * Git
 * DB: _Postgres_ ([pgxpool](https://pkg.go.dev/github.com/jackc/pgx/v4/pgxpool))
 * Containers: _Docker_, _Docker-compose_
-* Front: [_bootstrap_](https://getbootstrap.com/), _html_, _css_
+* Front: [_bootstrap_](https://getbootstrap.com/), _html_ (some helpful youtube videos i used: [1](https://www.youtube.com/watch?v=hlwlM4a5rxg), [2](https://www.youtube.com/watch?v=EzXdxvO1htA&t=672s)), _css_
 * CI/CD ([Github Actions](https://docs.github.com/en/actions))
 * And probabbly something else I forgot
   

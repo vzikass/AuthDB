@@ -57,7 +57,7 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 	return users, nil
 }
 
-func GetUserById(ctx context.Context, userID int) (u User, err error) {
+func GetUserById(ctx context.Context, userID string) (u User, err error) {
 	query := `select id, login, email, password from users where id = $1`
 	row := Dbpool.QueryRow(ctx, query, userID)
 	err = row.Scan(&u.ID, &u.Login, &u.Email, &u.Password)
