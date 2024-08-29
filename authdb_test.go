@@ -2,6 +2,7 @@
 package main
 
 import (
+	"AuthDB/cmd/app/controller"
 	"AuthDB/cmd/app/repository"
 	"AuthDB/utils"
 	"context"
@@ -323,6 +324,26 @@ func TestUserNotExist(t *testing.T) {
 			t.Log("User not found!")
 		}
 		return err
+	})
+}
+
+func TestIsValidPassword(t *testing.T) {
+	RunWithTransactions(t, func(tx pgx.Tx) error {
+		ctx := context.Background()
+		user := &repository.User{
+			Login:    "testuser",
+			Password: "qwerty123",
+			Email:    "testuser@example.com",
+		}
+
+		if err := user.Add(ctx, tx); err != nil {
+			t.Fatalf("Failed to add user: %v", err)
+		}
+
+		if !controller.IsValidPassword(user.Password){
+			t.Errorf("Password is not valid")
+		}
+		return nil
 	})
 }
 
