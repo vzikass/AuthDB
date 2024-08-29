@@ -17,6 +17,8 @@
 ![Preview of the Main page](/public/jpg/main.png)
 _logout, delete account and update data, these buttons work and perform their functionality_
 
+_also if you go to http://localhost:4444/users you can see your account and other users_
+
 -----------
 
 **AuthDB** is a project I wrote to practice the following things:
