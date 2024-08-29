@@ -5,6 +5,19 @@
 ![GitHub Created At](https://img.shields.io/github/created-at/vzikass/AuthDB)
 ![Go version](https://img.shields.io/github/go-mod/go-version/vzikass/AuthDB)
 
+## Preview
+**Login Page**(http://localhost:4444/login)
+
+![Preview of the login page](/public/jpg/login.png)
+
+**SignUp Page**(http://localhost:4444/signup)
+![Preview of the SignUP page](/public/jpg/signup.png)
+
+**Main Page** (http://localhost:4444 after registration)
+![Preview of the Main page](/public/jpg/main.png)
+_logout, delete account and update data, these buttons work and perform their functionality_
+
+-----------
 
 **AuthDB** is a project I wrote to practice the following things:
 + User registration with automatic addition of the user to the database.
@@ -14,9 +27,12 @@
 + HTTP request methods.
 + Querying the database.
 + Docker image and containers.
-+ Kubernetes([minikube](https://kubernetes.io/docs/tutorials/hello-minikube/))
++ Kubernetes([minikube](https://kubernetes.io/docs/tutorials/hello-minikube/)) ~~not used in this project~~
 + CI/CD (Github Actions)
-+ Testing
++ Git/Github
++ Postman
++ Markdown
++ Testing (with database for tests)
   
 And other things I've encountered in the writing process.
 
@@ -42,16 +58,21 @@ docker compose up --build
 Application will be available at [localhost:4444](http://localhost:4444)
 
 ## Testing
-*I don't see much point in testing, because in the process I gradually test the work myself. But since the project is intended for personal use, you can practice and make some Unit Tests, Integration Test or other tests. Perhaps I will add more tests if I think it's necessary.*
+*Added testing of some functionality*\
+You can check it :point_right: [here](https://github.com/vzikass/AuthDB/blob/main/authdb_test.go) :point_left:
+
 
 ## Achievements
 - [X] Write terrible code
 - [ ] Get the job done
 - [X] Sitting for days on a single bug
-## Technology stack:
+## Technology s tack:
+* *Golang* 1.22 
+* Git
 * DB: _Postgres_ ([pgxpool](https://pkg.go.dev/github.com/jackc/pgx/v4/pgxpool))
 * Containers: _Docker_, _Docker-compose_
-* Front: [_bootstrap_](https://getbootstrap.com/), _html_, _css_, _js_ scripts
+* Front: [_bootstrap_](https://getbootstrap.com/), _html_, _css_
+* CI/CD ([Github Actions](https://docs.github.com/en/actions))
 * And probabbly something else I forgot
   
 ## Why did I develop this project?  

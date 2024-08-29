@@ -6,10 +6,51 @@
     <title>Main Page</title>
     {{template "styles"}}
     {{template "update_style"}}
+    <link rel="stylesheet" type='text/css' href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
+    <style>
+        .welcome-container {
+            text-align: center;
+            font-size: 30px;
+            margin-bottom: 50%;
+        }
+        .welcome-container h2 {
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .welcome-container h2 img {
+            margin: 0 10px;
+            width: 40px;
+            height: 40px;
+        }
+        .logout-container{
+            position: absolute;
+            top: 10px;
+            right: 24px;
+            font-size: 30px;
+        }
+        .deletebtn-container{
+            position: absolute;
+            top: 35px;
+            right: 24px;
+            font-size: 30px;
+        }
+    </style>
 </head>
 <body>
     <div class="welcome-container">
         <h1>Welcome to the Home Page</h1>
+        <h2>Stack: 
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/go/go-original.svg" />  
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/postgresql/postgresql-original.svg" />
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/docker/docker-original.svg" />
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/github/github-original.svg" />
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/git/git-original.svg" />
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/kubernetes/kubernetes-original.svg" />
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/markdown/markdown-original.svg" />
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/postman/postman-original.svg" />
+        </h2>
     </div>
     <div class="logout-container">
         <a href="/logout">

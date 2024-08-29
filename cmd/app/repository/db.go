@@ -29,12 +29,6 @@ func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err er
 	cfg.MaxConnIdleTime = 30 * time.Minute
 	cfg.ConnConfig.ConnectTimeout = 5 * time.Second
 
-	// Cfg struct with keepalive and timeout fields
-	// cfg.ConnConfig.DialFunc = (&net.Dialer{
-	// 	KeepAlive: cfg.HealthCheckPeriod,
-	// 	Timeout:   cfg.ConnConfig.ConnectTimeout,
-	// }).DialContext
-
 	dbpool, err = pgxpool.ConnectConfig(ctx, cfg)
 	if err != nil {
 		err = fmt.Errorf("failed to connect config: %w", err)

@@ -3,36 +3,170 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Singup Page</title>
+    <title>SignUp page</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
-        .signup-container{
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: url('/public/jpg/background.jpg') no-repeat;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .signupForm-container{
+            width: 420px;
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, .2);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+            color: #fff;
+            border-radius: 10px;
+            padding: 30px 40px;
+        }
+
+        .signupForm-container .btn{
+            width: 100%;
+            height: 45px;
+            background: #fff;
+            border: none;
+            outline: none;
+            border-radius: 40px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+            cursor: pointer;
+            font-size: 16px;
+            color: black;
+            font-weight: 600;
+        }
+
+        .signupForm-container h1{
+            font-size: 36px;
             text-align: center;
+        }
+        
+        .signupForm-container .input-box {
+            position: relative;
+            width: 100%;
+            height: 50px; 
+            margin: 30px 0;
+        }
+
+        .input-box {
+            position: relative;
+            width: 100%;
+            height: 50px; 
+            margin: 30px 0;
+            display: flex;
+            align-items: center; 
+        }
+
+        .input-box input {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            border: 2px solid rgba(255, 255, 255, .2);
+            border-radius: 40px;
+            font-size: 16px;
+            color: #fff;
+            /* padding: 20px 45px 20px 20 px; */
+            padding: 12px 45px 12px 20px; 
+            box-sizing: border-box;
+        }
+        .input-box input:focus~label,
+        .input-box input:valid~label {
+            top: -5px;
+        }
+        .input-box input::placeholder {
+            color: #fff;
+        }
+
+        .input-box i {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%); 
             font-size: 20px;
+            color: #fff;
+        }
+
+        /* .loginForm-container .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14.5px;
+            margin: -15px 0 15px;
+        } */
+
+        /* .remember-forgot label input {
+            accent-color: #fff;
+            margin-right: 3px;
+        }
+
+        .remember-forgot a {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .remember-forgot a:hover {
+            text-decoration: underline;
+        } */
+
+        .signupForm-container .login-link {
+            font-size: 14.5px;
+            text-align: center;
+            margin: 20px 0 15px;
+        }
+
+        .login-link p a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link p a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <div class="signup-container">
-<form id="signupForm" name="signUpForm" action="/signup" method="post" >
-    <label for="login">Login</label><br>
-    <input type="login" id="login" name="login" required><br>
-    <label for="email">Email</label><br>
-    <input type="email" id="email" name="email" required><br>
-    <label for="password">Password</label><br>
-    <input type="password" id="password" name="password" required><br>
-    <label for="password2">Repeat password</label><br>
-    <input type="password" id="password2" name="password2" required><br>
-    <br>
-    <button type="submit" name="submitBtn">Signup</button>
+    <div class="signupForm-container">
+<form id="signupForm" name="signupForm" action="/signup" method="post" class="mt-4">
+    <h1>SignUp</h1> 
+
+    <div class="input-box">
+        <input type="login" id="login" name="login" autocomplete="on" placeholder="Username" required>
+        <i class='bx bxs-user'></i>
+    </div>
+
+    <div class="input-box">
+        <input type="email" id="email" name="email" autocomplete="on" placeholder="Email" required>
+        <i class='bx bx-envelope'></i>
+    </div>
+
+    <div class="input-box">
+        <input type="password" id="password" name="password" autocomplete="on" placeholder="Password" required>
+        <i class='bx bxs-lock-alt'></i>
+    </div>
+
+    <div class="input-box">
+        <input type="password" id="repassword" name="repassword" autocomplete="on" placeholder="Repeat Password" required>
+        <i class='bx bxs-lock-alt'></i>
+    </div>
+
+    <button type="submit" class="btn">Sign Up</button>
+<div class="login-link">
+    <p>Already have an account? <a href="/login">Login</a></p>
+</div>
 </form>
-{{if .}}
+{{if . }}
 <div>
     {{.Message}}
-</div>
+    </div>
 {{end}}
 <br>
-<a href="/login">Login</a>
 </div>
 </body>
 </html>
