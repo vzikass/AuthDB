@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -19,6 +18,7 @@ import (
 
 var (
 	ErrUserNotFound = errors.New("user not found")
+	dbURL           = "postgres://postgres:193566@testdb:5432/testdb"
 )
 
 func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
@@ -29,7 +29,7 @@ func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
 }
 
 func RunWithTransactions(t *testing.T, fn func(tx pgx.Tx) error) {
-	pool, err := repository.InitDBConn(context.Background(), os.Getenv("TESTDB_URL"))
+	pool, err := repository.InitDBConn(context.Background(), dbURL)
 	if err != nil {
 		log.Fatalf("Error initializing Test DB connection: %v\n", err)
 	}
