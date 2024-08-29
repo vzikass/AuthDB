@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"context"
 	"AuthDB/cmd/app/repository"
 	"AuthDB/utils"
+	"context"
 	"fmt"
 	"html/template"
 	"log"
@@ -23,7 +23,7 @@ type App struct {
 	ctx     context.Context
 	repo    *repository.Repository
 	cache   map[string]repository.User
-	cacheMu sync.Mutex 
+	cacheMu sync.Mutex
 }
 
 func NewApp(ctx context.Context, dbpool *pgxpool.Pool) *App {
@@ -31,7 +31,7 @@ func NewApp(ctx context.Context, dbpool *pgxpool.Pool) *App {
 		cache: make(map[string]repository.User)}
 }
 
-func (a *App) Routes(r *httprouter.Router) { 
+func (a *App) Routes(r *httprouter.Router) {
 	r.ServeFiles("/public/*filepath", http.Dir("public"))
 
 	r.GET("/", a.authorized(a.HomePage))
@@ -57,24 +57,6 @@ func (a *App) Routes(r *httprouter.Router) {
 	r.GET("/users", a.authorized(GetAllUsers))
 }
 
-func (a *App) LoginPage(w http.ResponseWriter, message string) {
-	path := filepath.Join("public", "html", "login.html")
-	tmpl, err := template.ParseFiles(path)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	type answer struct {
-		Message string
-	}
-	data := answer{Message: message}
-	err = tmpl.ExecuteTemplate(w, "login", data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-}
-
 func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	login := r.FormValue("login")
 	password := r.FormValue("password")
@@ -92,7 +74,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		return
 	}
 	token, err := utils.GenerateJWT(user.Login)
-	if err != nil{
+	if err != nil {
 		log.Fatalf("Error generate token: %v", err)
 		return
 	}
@@ -107,24 +89,6 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		Expires: expiration, Secure: true, HttpOnly: true}
 	http.SetCookie(w, &cookie)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
-func (a *App) SignupPage(w http.ResponseWriter, message string) {
-	path := filepath.Join("public", "html", "signup.html")
-	tmpl, err := template.ParseFiles(path)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	type answer struct {
-		Message string
-	}
-	data := answer{Message: message}
-	err = tmpl.ExecuteTemplate(w, "signup", data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 }
 
 func isNumeric(s string) bool {
@@ -246,22 +210,6 @@ func (a *App) HomePage(w http.ResponseWriter, r *http.Request, p httprouter.Para
 	}
 }
 
-func (a *App) renderDeleteConfirmationPage(w http.ResponseWriter) {
-	path := filepath.Join("public", "html", "delete.html")
-	tmpl, err := template.ParseFiles(path)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("Error parsing template: %v", err)
-		return
-	}
-	err = tmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Printf("Error executing template: %v", err)
-		return
-	}
-}
-
 func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	token, err := ReadCookie("token", r)
 	if err != nil {
@@ -291,20 +239,6 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 		http.SetCookie(w, &c)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
-}
-
-func (a *App) UpdateUserPage(w http.ResponseWriter, message string) {
-	path := filepath.Join("public", "html", "update.html")
-	path2 := filepath.Join("public", "html", "login.html")
-	tmpl, err := template.ParseFiles(path, path2)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	err = tmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
 }
 
 func (a *App) UpdateLogin(w http.ResponseWriter, oldLogin, newLogin string) error {
@@ -360,7 +294,7 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
-	if user.Password != newPassword{
+	if user.Password != newPassword {
 		query := `UPDATE users SET password = $1 WHERE password = $2`
 		err = a.repo.UpdateData(a.ctx, query, hashedNewPassword, userHashedPass)
 		if err != nil {
@@ -399,7 +333,7 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 			return
 		}
 	} else {
-			http.Error(w, "No valid update data provided", http.StatusBadRequest)
-			return
-		}
+		http.Error(w, "No valid update data provided", http.StatusBadRequest)
+		return
+	}
 }

@@ -1,12 +1,13 @@
 package controller
 
 import (
+	"AuthDB/cmd/app/repository"
 	"context"
 	"encoding/json"
-	"AuthDB/cmd/app/repository"
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -57,9 +58,7 @@ func AddUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 }
 
-// in the future you can add new functionality using these functions
 
-/*
 func DeleteUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	userId := p.ByName("userID")
 	ctx := context.Background()
@@ -68,7 +67,11 @@ func DeleteUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = user.Delete(ctx, userId)
+	userID, err := strconv.Atoi(userId)
+	if err != nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	err = user.Delete(ctx, nil, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -95,7 +98,7 @@ func UpdateUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	user.Login = login
 	user.Email = email
 	user.Password = password
-	err = user.Update(ctx)
+	err = user.Update(ctx, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -106,4 +109,3 @@ func UpdateUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		return
 	}
 }
-*/

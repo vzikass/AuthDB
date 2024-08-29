@@ -57,7 +57,7 @@ func RunWithTransactions(t *testing.T, fn func(tx pgx.Tx) error) {
 	err = fn(tx)
 }
 
-// Database tests
+// DB connection test (wrong connection)
 func TestInitDBConn_InvalidURL(t *testing.T) {
 	ctx := context.Background()
 	invalidURL := "invalidUrl"
@@ -75,7 +75,7 @@ func TestInitDBConn_InvalidURL(t *testing.T) {
 
 // -----------------------
 
-// User tests
+// User tests (using test db)
 func TestNewUser(t *testing.T) {
 	RunWithTransactions(t, func(tx pgx.Tx) error {
 		login := "testuser"

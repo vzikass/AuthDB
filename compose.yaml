@@ -80,8 +80,6 @@ services:
         condition: service_healthy
       maindb:
         condition: service_healthy
-    # environment:
-      # TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb
     # commands to keep the test container running 
     command: ["sh", "-c", "tail -f /dev/null"] 
     networks:
