@@ -137,8 +137,8 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 	login := strings.TrimSpace(r.FormValue("login"))
 	email := strings.TrimSpace(r.FormValue("email"))
 	password := strings.TrimSpace(r.FormValue("password"))
-	password2 := strings.TrimSpace(r.FormValue("password2"))
-	if login == "" || email == "" || password == "" || password2 == "" {
+	repassword := strings.TrimSpace(r.FormValue("repassword"))
+	if login == "" || email == "" || password == "" || repassword == "" {
 		a.SignupPage(w, "Not all fields are filled in")
 		return
 	}
@@ -146,7 +146,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		a.SignupPage(w, "Login cannot be entirely numeric")
 		return
 	}
-	if password != password2 {
+	if password != repassword {
 		a.SignupPage(w, "Password mismatch")
 		return
 	}
@@ -402,5 +402,4 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 			http.Error(w, "No valid update data provided", http.StatusBadRequest)
 			return
 		}
-		// http.Redirect(w, r, "/", http.StatusSeeOther)
 }

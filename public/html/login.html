@@ -11,7 +11,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: url('/public/jpg/loginpage.jpg') no-repeat;
+            background: url('/public/jpg/background.jpg') no-repeat;
             background-size: cover;
             background-position: center;
         }
@@ -53,6 +53,15 @@
             margin: 30px 0;
         }
 
+        .input-box {
+            position: relative;
+            width: 100%;
+            height: 50px; 
+            margin: 30px 0;
+            display: flex;
+            align-items: center; 
+        }
+
         .input-box input {
             width: 100%;
             height: 100%;
@@ -63,9 +72,14 @@
             border-radius: 40px;
             font-size: 16px;
             color: #fff;
-            padding: 20px 45px 20px 20 px;
+            /* padding: 20px 45px 20px 20 px; */
+            padding: 12px 45px 12px 20px; 
+            box-sizing: border-box;
         }
-
+        .input-box input:focus~label,
+        .input-box input:valid~label {
+            top: -5px;
+        }
         .input-box input::placeholder {
             color: #fff;
         }
@@ -74,28 +88,29 @@
             position: absolute;
             right: 20px;
             top: 50%;
-            transform: translate(-50%);
+            transform: translateY(-50%); 
             font-size: 20px;
+            color: #fff;
         }
 
-        .loginForm-container .remember-forgot {
+        .loginForm-container .remember-me {
             display: flex;
             justify-content: space-between;
             font-size: 14.5px;
             margin: -15px 0 15px;
-        }
+        } 
 
-        .remember-forgot label input {
+         .remember-me label input {
             accent-color: #fff;
             margin-right: 3px;
         }
 
-        .remember-forgot a {
+        .remember-me a {
             color: #fff;
             text-decoration: none;
         }
 
-        .remember-forgot a:hover {
+        .remember-me a:hover {
             text-decoration: underline;
         }
 
@@ -124,18 +139,15 @@
     <div class="input-box">
         <input type="text" id="login" name="login" autocomplete="on" placeholder="Username" required>
         <i class='bx bxs-user'></i>
-        <!-- <input type="login" id="login" name="login" autocomplete="on"><br> -->
     </div>
 
     <div class="input-box">
         <input type="password" id="password" name="password" autocomplete="on" placeholder="Password" required>
         <i class='bx bxs-lock-alt'></i>
-        <!-- <input type="password" id="password" name="password" autocomplete="on"><br> -->
     </div>
 
-    <div class="remember-forgot">
+    <div class="remember-me">
         <label><input type="checkbox">Remember me</label>
-        <a href="#">Forgot password?</a>
     </div>
 
     <button type="submit" class="btn">Login</button>
@@ -149,7 +161,6 @@
     </div>
 {{end}}
 <br>
-<!-- <a href="/signup">Signup</a> -->
 </div>
 </body>
 </html>
