@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 func (a *App) SignupPage(w http.ResponseWriter, message string) {
@@ -70,5 +72,21 @@ func (a *App) UpdateUserPage(w http.ResponseWriter, message string) {
 	err = tmpl.Execute(w, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+}
+
+func (a *App) HomePage(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	path := filepath.Join("public", "html", "main.html")
+	path2 := filepath.Join("public", "html", "delete.html")
+	path3 := filepath.Join("public", "html", "update.html")
+	tmpl, err := template.ParseFiles(path, path2, path3)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = tmpl.Execute(w, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 }

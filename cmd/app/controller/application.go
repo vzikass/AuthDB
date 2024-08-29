@@ -5,15 +5,14 @@ import (
 	"AuthDB/utils"
 	"context"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/julienschmidt/httprouter"
@@ -82,19 +81,51 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	a.cacheMu.Lock()
 	a.cache[token] = user
 	a.cacheMu.Unlock()
-	// Create cookies when login
-	livingTime := 60 * time.Minute
+
+	// creating cookies with check button remember me
+	rememberMe := r.FormValue("remember_me") == "on"
+	var livingTime time.Duration
+	if rememberMe {
+		livingTime = 24 * time.Hour * 15
+	} else {
+		livingTime = 1 * time.Hour
+	}
 	expiration := time.Now().Add(livingTime)
-	cookie := http.Cookie{Name: "token", Value: url.QueryEscape(token),
-		Expires: expiration, Secure: true, HttpOnly: true}
+	cookie := http.Cookie{
+		Name:     "token",
+		Value:    url.QueryEscape(token),
+		Expires:  expiration,
+		Secure:   true,
+		HttpOnly: true,
+	}
 	http.SetCookie(w, &cookie)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func isNumeric(s string) bool {
+func IsNumeric(s string) bool {
 	// numbers from 0 to 9 matches the previous token between one and unlimited times
 	re := regexp.MustCompile(`^\d+$`)
 	return re.MatchString(s)
+}
+
+func IsValidPassword(password string) bool {
+	var hasDigit, hasLetter bool
+	if len(password) < 5 {
+		return false
+	}
+
+	for _, char := range password {
+		switch {
+		case unicode.IsLetter(char):
+			hasLetter = true
+		case unicode.IsDigit(char):
+			hasDigit = true
+		}
+		if hasDigit && hasLetter {
+			return true
+		}
+	}
+	return hasDigit && hasLetter
 }
 
 func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -106,7 +137,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		a.SignupPage(w, "Not all fields are filled in")
 		return
 	}
-	if isNumeric(login) {
+	if IsNumeric(login) {
 		a.SignupPage(w, "Login cannot be entirely numeric")
 		return
 	}
@@ -114,8 +145,12 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		a.SignupPage(w, "Password mismatch")
 		return
 	}
-	if len(password) <= 3 || len(login) <= 3 {
-		a.SignupPage(w, "Minimum field length - 4 characters")
+	if !IsValidPassword(password) {
+		a.SignupPage(w, "Minimum password length - 5 characters")
+		return
+	}
+	if len(login) <= 4 {
+		a.SignupPage(w, "Minimum login length - 4 characters")
 		return
 	}
 	userExist, err := a.repo.UserExist(a.ctx, nil, login, email)
@@ -194,22 +229,6 @@ func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func (a *App) HomePage(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	path := filepath.Join("public", "html", "main.html")
-	path2 := filepath.Join("public", "html", "delete.html")
-	path3 := filepath.Join("public", "html", "update.html")
-	tmpl, err := template.ParseFiles(path, path2, path3)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	err = tmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-}
-
 func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	token, err := ReadCookie("token", r)
 	if err != nil {
@@ -217,12 +236,14 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+
 	user, ok := a.cache[token]
 	if !ok {
 		log.Printf("Token not found in cache")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+
 	err = a.repo.DeleteUserByID(a.ctx, user.ID)
 	if err != nil {
 		log.Printf("Error deleting user by ID: %v", err)
@@ -247,6 +268,7 @@ func (a *App) UpdateLogin(w http.ResponseWriter, oldLogin, newLogin string) erro
 		a.UpdateUserPage(w, "User not found")
 		return err
 	}
+
 	if user.Login != newLogin {
 		query := `UPDATE users SET login = $1 WHERE login = $2`
 		err = a.repo.UpdateData(a.ctx, query, newLogin, oldLogin)
@@ -256,6 +278,7 @@ func (a *App) UpdateLogin(w http.ResponseWriter, oldLogin, newLogin string) erro
 		}
 		return nil
 	}
+
 	a.UpdateUserPage(w, "This login already exists")
 	return fmt.Errorf("login already exists")
 }
@@ -266,6 +289,7 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 		a.UpdateUserPage(w, "User not found")
 		return err
 	}
+
 	if user.Email != newEmail {
 		query := `UPDATE users SET email = $1 WHERE email = $2`
 		err = a.repo.UpdateData(a.ctx, query, newEmail, oldEmail)
@@ -275,6 +299,7 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 		}
 		return nil
 	}
+
 	a.UpdateUserPage(w, "This email already exists")
 	return fmt.Errorf("email already exists")
 }
@@ -284,16 +309,19 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 	if len(newPassword) <= 3 {
 		a.UpdateUserPage(w, "Minimum field length - 4 characters")
 	}
+
 	user, err := a.repo.FindUserByPassword(a.ctx, userHashedPass)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
+
 	hashedNewPassword, err := utils.GenerateHash(newPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
+
 	if user.Password != newPassword {
 		query := `UPDATE users SET password = $1 WHERE password = $2`
 		err = a.repo.UpdateData(a.ctx, query, hashedNewPassword, userHashedPass)
@@ -303,6 +331,7 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
+
 	user.Password = hashedNewPassword
 	return err
 }

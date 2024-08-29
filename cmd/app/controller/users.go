@@ -83,29 +83,3 @@ func DeleteUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	}
 }
 
-func UpdateUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	ctx := context.Background()
-	userId := p.ByName("userID")
-	login := r.FormValue("login")
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-
-	user, err := repository.GetUserById(ctx, userId)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	user.Login = login
-	user.Email = email
-	user.Password = password
-	err = user.Update(ctx, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	err = json.NewEncoder(w).Encode("Data updated")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-}
