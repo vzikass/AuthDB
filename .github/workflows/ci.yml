@@ -38,7 +38,13 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y docker-compose
-    
+        
+    - name: Check Dockerfile and Compose
+      run: |
+        ls -la
+        cat Dockerfile
+        cat compose.yaml
+
     - name: Build and Run Tests in Docker
       run: |
         docker-compose -f compose.yaml up -d maindb testdb

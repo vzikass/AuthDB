@@ -68,7 +68,7 @@ You can check it :point_right: [here](https://github.com/vzikass/AuthDB/blob/mai
 - [X] Write terrible code
 - [ ] Get the job done
 - [X] Sitting for days on a single bug
-## Technology s tack:
+## Technology stack:
 * *Golang* 1.22 
 * Git
 * DB: _Postgres_ ([pgxpool](https://pkg.go.dev/github.com/jackc/pgx/v4/pgxpool))
