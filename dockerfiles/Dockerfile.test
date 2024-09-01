@@ -7,7 +7,7 @@ RUN go mod download
 COPY . ./
 COPY db.env /app/db.env
     
-RUN sleep 10
+RUN sleep 3
 
 CMD ["go", "test", "-timeout", "30s", "./..."]
 

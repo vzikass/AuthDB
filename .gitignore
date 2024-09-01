@@ -1,3 +1,4 @@
 README.Docker.md
-*.conf
 jwt.env
+db.env
+TODO.md
