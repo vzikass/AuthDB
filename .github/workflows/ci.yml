@@ -6,7 +6,7 @@ on:
       - "main"
       - "tomerge"
   pull_request:
-    branches: 
+    branches:
       - "main"
       - "tomerge"
 
