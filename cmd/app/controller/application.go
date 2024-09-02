@@ -108,7 +108,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		"timestamp": "%s"
 		}`, user.ID, user.Email, time.Now().UTC().Format(time.RFC3339))),
 	}
-	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -203,7 +203,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 			"timestamp": "%s"
 		}`, user.ID, user.Email, time.Now().UTC().Format(time.RFC3339))),
 	}
-	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
 	a.LoginPage(w, fmt.Sprintln("Successful signup!"))
@@ -282,6 +282,16 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 			MaxAge: -1,
 		}
 		http.SetCookie(w, &c)
+	}
+	message := kafka.Message{
+		Value: []byte(fmt.Sprintf(`{
+		"event": "delete_account",
+		"user_id": "%d",
+		"timestamp": "%s",
+		}`, user.ID, time.Now().UTC().Format(time.RFC3339))),
+	}
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+		log.Println("Failed to produce Kafka message:", err)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
