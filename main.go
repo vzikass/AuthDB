@@ -3,6 +3,7 @@ package main
 import (
 	"AuthDB/cmd/app/controller"
 	"AuthDB/cmd/app/repository"
+	"AuthDB/kafka"
 	"context"
 	"log"
 	"net/http"
@@ -17,6 +18,13 @@ var wg sync.WaitGroup
 
 func main() {
 	ctx := context.Background()
+
+	// Init Kafka
+	kafka.InitKafka()
+	defer kafka.Producer.Close()
+	defer kafka.Consumer.Close()
+
+
 	// Load from .env file
 	if err := godotenv.Load("db.env"); err != nil{
 		log.Fatalf("Failed to load db.env: %v", err)
