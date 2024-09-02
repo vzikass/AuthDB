@@ -2,6 +2,7 @@ package controller
 
 import (
 	"AuthDB/cmd/app/repository"
+	"AuthDB/kafka"
 	"AuthDB/utils"
 	"context"
 	"fmt"
@@ -99,6 +100,17 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
+	message := kafka.Message{
+		Value: []byte(fmt.Sprintf(`{
+		"event": "login",
+		"user_id": "%d",
+		"email": "%s",
+		"timestamp": "%s"
+		}`, user.ID, user.Email, time.Now().UTC().Format(time.RFC3339))),
+	}
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+		log.Println("Failed to produce Kafka message:", err)
+	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -129,6 +141,7 @@ func IsValidPassword(password string) bool {
 }
 
 func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	user := repository.User{}
 	login := strings.TrimSpace(r.FormValue("login"))
 	email := strings.TrimSpace(r.FormValue("email"))
 	password := strings.TrimSpace(r.FormValue("password"))
@@ -181,6 +194,17 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 	if err != nil {
 		a.SignupPage(w, err.Error())
 		return
+	}
+	message := kafka.Message{
+		Value: []byte(fmt.Sprintf(`{
+			"event": "signup",
+			"user_id": "%d",
+			"email": "%s",
+			"timestamp": "%s"
+		}`, user.ID, user.Email, time.Now().UTC().Format(time.RFC3339))),
+	}
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+		log.Println("Failed to produce Kafka message:", err)
 	}
 	a.LoginPage(w, fmt.Sprintln("Successful signup!"))
 }
