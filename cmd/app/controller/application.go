@@ -296,7 +296,7 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
-func (a *App) UpdateLogin(w http.ResponseWriter, oldLogin, newLogin string) error {
+func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) error {
 	user, err := a.repo.FindUserByLogin(a.ctx, oldLogin)
 	if err != nil {
 		a.UpdateUserPage(w, "User not found")
@@ -311,6 +311,18 @@ func (a *App) UpdateLogin(w http.ResponseWriter, oldLogin, newLogin string) erro
 			return err
 		}
 		return nil
+	}
+
+	message := kafka.Message{
+		Value: []byte(fmt.Sprintf(`{
+			"event": "update_password",
+			"user_id": "%d",
+			"newusername": "%s",
+			"timestamp": "%s"
+		}`, user.ID, newLogin, time.Now().UTC().Format(time.RFC3339))),
+	}
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+		log.Println("Failed to produce Kafka message:", err)
 	}
 
 	a.UpdateUserPage(w, "This login already exists")
@@ -333,8 +345,18 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 		}
 		return nil
 	}
-
 	a.UpdateUserPage(w, "This email already exists")
+	message := kafka.Message{
+		Value: []byte(fmt.Sprintf(`{
+			"event": "update_password",
+			"user_id": "%d",
+			"newemail": "%s",
+			"timestamp": "%s"
+		}`, user.ID, newEmail, time.Now().UTC().Format(time.RFC3339))),
+	}
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+		log.Println("Failed to produce Kafka message:", err)
+	}
 	return fmt.Errorf("email already exists")
 }
 
@@ -366,19 +388,30 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 	user.Password = hashedNewPassword
+	message := kafka.Message{
+		Value: []byte(fmt.Sprintf(`{
+			"event": "update_password",
+			"user_id": "%d",
+			"newpassword": "%s",
+			"timestamp": "%s"
+		}`, user.ID, newPassword, time.Now().UTC().Format(time.RFC3339))),
+	}
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+		log.Println("Failed to produce Kafka message:", err)
+	}
 	return err
 }
 
 func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	user := repository.User{}
-	oldLogin := r.FormValue("oldLogin")
-	newLogin := r.FormValue("newLogin")
+	oldUsername := r.FormValue("oldLogin")
+	newUsername := r.FormValue("newLogin")
 	oldEmail := r.FormValue("oldEmail")
 	newEmail := r.FormValue("newEmail")
 	newPassword := r.FormValue("newPassword")
 
-	if oldLogin != "" && newLogin != "" {
-		err := a.UpdateLogin(w, oldLogin, newLogin)
+	if oldUsername != "" && newUsername != "" {
+		err := a.UpdateUsername(w, oldUsername, newUsername)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -405,10 +438,11 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 			"user_id": "%d",
 			"old_login": "%s",
 			"new_login": "%s",
+			"new_password": "%s"
 			"old_email": "%s",
 			"new_email": "%s",
 			"timestamp": "%s"
-		}`, user.ID, oldLogin, newLogin, oldEmail, newEmail, time.Now().UTC().Format(time.RFC3339))),
+		}`, user.ID, oldUsername, newUsername, newPassword, oldEmail, newEmail, time.Now().UTC().Format(time.RFC3339))),
 	}
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
 		fmt.Println("Failed to produce Kafka message:", err)
