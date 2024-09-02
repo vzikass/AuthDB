@@ -365,12 +365,12 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
-
 	user.Password = hashedNewPassword
 	return err
 }
 
 func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	user := repository.User{}
 	oldLogin := r.FormValue("oldLogin")
 	newLogin := r.FormValue("newLogin")
 	oldEmail := r.FormValue("oldEmail")
@@ -398,5 +398,19 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 	} else {
 		http.Error(w, "No valid update data provided", http.StatusBadRequest)
 		return
+	}
+	message := kafka.Message{
+		Value: []byte(fmt.Sprintf(`{
+			"event": "update_data",
+			"user_id": "%d",
+			"old_login": "%s",
+			"new_login": "%s",
+			"old_email": "%s",
+			"new_email": "%s",
+			"timestamp": "%s"
+		}`, user.ID, oldLogin, newLogin, oldEmail, newEmail, time.Now().UTC().Format(time.RFC3339))),
+	}
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+		fmt.Println("Failed to produce Kafka message:", err)
 	}
 }
