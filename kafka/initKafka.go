@@ -36,4 +36,10 @@ func InitKafka() {
 	if err != nil {
 		log.Fatalln("Failed to start Sarama consumer:", err)
 	}
+
+	// Create Topic
+	if err := CreateTopic(Brokers, Topic, 3, 1); err != nil{
+		log.Fatalf("Failed to create topic: %v", err)
+	}
+	log.Println("Topic created successfully")
 }
