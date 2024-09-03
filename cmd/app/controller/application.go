@@ -286,7 +286,7 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 		"event": "delete_account",
-		"user_id": "%d",
+		"deleteduser_id": "%d",
 		"timestamp": "%s",
 		}`, user.ID, time.Now().UTC().Format(time.RFC3339))),
 	}
