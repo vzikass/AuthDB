@@ -38,8 +38,8 @@ func InitKafka() {
 	}
 
 	// Create Topic
-	if err := CreateTopic(Brokers, Topic, 3, 1); err != nil{
-		log.Fatalf("Failed to create topic: %v", err)
-	}
-	log.Println("Topic created successfully")
+	// if err := CreateTopic(Brokers, Topic, 1, 1); err != nil{
+	// 	log.Fatalf("Failed to create topic: %v", err)
+	// }
+	// log.Println("Topic created successfully")
 }
