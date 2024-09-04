@@ -100,6 +100,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
+	// Creating kafka message 
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 		"event": "login",

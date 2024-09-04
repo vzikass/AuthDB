@@ -2,6 +2,8 @@ package kafka
 
 import "github.com/IBM/sarama"
 
+
+// Creating Topic with code
 func CreateTopic(brokers []string, topic string, partitions int32, replicationFactor int16) error {
 	config := sarama.NewConfig()
 	admin, err := sarama.NewClusterAdmin(brokers, config)

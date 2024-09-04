@@ -18,23 +18,21 @@ var wg sync.WaitGroup
 
 func main() {
 	ctx := context.Background()
-
-	// Init Kafka
-	kafka.InitKafka()
-	defer kafka.Producer.Close()
-	defer kafka.Consumer.Close()
-
-
 	// Load from .env file
 	if err := godotenv.Load("db.env"); err != nil{
 		log.Fatalf("Failed to load db.env: %v", err)
 	}
-
+	
 	// Connect db 
 	dbpool, err := repository.InitDBConn(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalf("Error initializing DB connection: %v\n", err)
 	}
+	
+	// Init Kafka | producer | consumer
+	kafka.InitKafka()
+	defer kafka.Producer.Close()
+	defer kafka.Consumer.Close()
 
 	// Main app
 	app := controller.NewApp(ctx, dbpool)
