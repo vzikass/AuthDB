@@ -1,6 +1,7 @@
 # AuthDB
 ![GitHub contributors](https://img.shields.io/github/contributors/vzikass/AuthDB)
 ![GitHub last commit](https://img.shields.io/github/last-commit/vzikass/AuthDB)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/vzikass/AuthDB/ci.yml)
 ![Docker Image Version](https://img.shields.io/docker/v/_/alpine)
 ![GitHub Created At](https://img.shields.io/github/created-at/vzikass/AuthDB)
 ![Go version](https://img.shields.io/github/go-mod/go-version/vzikass/AuthDB)
