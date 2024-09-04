@@ -6,11 +6,11 @@
 ![Go version](https://img.shields.io/github/go-mod/go-version/vzikass/AuthDB)
 
 ## Preview
-**Login Page**(http://localhost:4444/login)
+**Login Page** (http://localhost:4444/login)
 
 ![Preview of the login page](/public/jpg/login.png)
 
-**SignUp Page**(http://localhost:4444/signup)
+**SignUp Page** (http://localhost:4444/signup)
 ![Preview of the SignUP page](/public/jpg/signup.png)
 
 **Main Page** (http://localhost:4444 after registration)
@@ -71,6 +71,8 @@ You can check it :point_right: [here](https://github.com/vzikass/AuthDB/blob/mai
 ## Technology stack:
 * *Golang* 1.22 
 * Git
+* Web server: [nginx](https://nginx.org/en/)
+* Broker: [Apache Kafka](https://kafka.apache.org/) | ~Still trying to use it correctly cuz now I'm having some issues :)~
 * DB: _Postgres_ ([pgxpool](https://pkg.go.dev/github.com/jackc/pgx/v4/pgxpool))
 * Containers: _Docker_, _Docker-compose_
 * Front: [_bootstrap_](https://getbootstrap.com/), _html_ (some helpful youtube videos i used: [1](https://www.youtube.com/watch?v=hlwlM4a5rxg), [2](https://www.youtube.com/watch?v=EzXdxvO1htA&t=672s)), _css_
