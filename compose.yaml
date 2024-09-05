@@ -53,6 +53,9 @@ services:
 
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka:9092 --list
+
+      # Keep the container alive
+      tail -f /dev/null
       "
     networks:
       - mynetwork
