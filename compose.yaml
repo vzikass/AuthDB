@@ -108,7 +108,7 @@ services:
     container_name: nginx_proxy
     build:
       context: .
-      dockerfile: dockerfiles/Dockerfile.nginx
+      dockerfile: docker/Dockerfile.nginx
     ports:
       - "80:80"
     volumes:
@@ -130,9 +130,7 @@ services:
       POSTGRES_PASSWORD: 193566
       POSTGRES_DB: testdb
     volumes:
-      # - testdb_data:/var/lib/postgresql/data
       - ./migrations/20240807194809_createtestdb.sql:/docker-entrypoint-initdb.d/20240807194809_createtestdb.sql
-      # - ./pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -148,7 +146,7 @@ services:
     image: test
     build:
       context: .
-      dockerfile: dockerfiles/Dockerfile.test
+      dockerfile: docker/Dockerfile.test
     depends_on:
       testdb:
         condition: service_healthy

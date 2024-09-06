@@ -19,7 +19,7 @@ var wg sync.WaitGroup
 func main() {
 	ctx := context.Background()
 	// Load from .env file
-	if err := godotenv.Load("db.env"); err != nil{
+	if err := godotenv.Load("./db.env"); err != nil{
 		log.Fatalf("Failed to load db.env: %v", err)
 	}
 	
