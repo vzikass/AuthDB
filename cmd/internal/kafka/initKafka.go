@@ -23,7 +23,7 @@ func InitKafka() {
 	// Producer initialization
 	producercfg := sarama.NewConfig()
 	producercfg.Producer.Return.Successes = true
-	Producer, err = sarama.NewSyncProducer([]string{"kafka:9092"}, producercfg)
+	Producer, err = sarama.NewSyncProducer([]string{"kafka-1:9092", "kafka-2:9093"}, producercfg)
 	if err != nil {
 		log.Fatalln("Failed to start Sarama producer:", err)
 	}
@@ -32,7 +32,7 @@ func InitKafka() {
 	consumercfg := sarama.NewConfig()
 	consumercfg.Consumer.Return.Errors = true
 	// or instead of consumercfg you can use nil (in this case the default consumer settings will be used)
-	Consumer, err = sarama.NewConsumer([]string{"kafka:9092"}, consumercfg) 
+	Consumer, err = sarama.NewConsumer([]string{"kafka-1:9092", "kafka-2:9093"}, consumercfg) 
 	if err != nil {
 		log.Fatalln("Failed to start Sarama consumer:", err)
 	}
