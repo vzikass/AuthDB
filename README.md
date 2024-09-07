@@ -35,6 +35,7 @@ _also if you go to http://localhost:4444/users you can see your account and othe
 + Postman
 + Markdown
 + Testing (with database for tests)
++ Kafka (simple configuration)
   
 And other things I've encountered in the writing process.
 

@@ -18,6 +18,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) Login(ctx context.Context, tx pgx.Tx, login string) (u User, err error) {
 	query := `select id, login, password, email from users where login = $1`
+
 	if tx != nil {
 		err = tx.QueryRow(ctx, query, login).Scan(&u.ID, &u.Login, &u.Password, &u.Email)
 	} else {
@@ -35,6 +36,7 @@ func (r *Repository) Login(ctx context.Context, tx pgx.Tx, login string) (u User
 func (r *Repository) UserExist(ctx context.Context, tx pgx.Tx, login, email string) (exist bool, err error) {
 	var count int
 	query := `select count(*) from users where login = $1 or email = $2`
+
 	if tx != nil {
 		err = tx.QueryRow(ctx, query, login, email).Scan(&count)
 	} else {
@@ -48,6 +50,7 @@ func (r *Repository) UserExist(ctx context.Context, tx pgx.Tx, login, email stri
 
 func (r *Repository) GetByID(ctx context.Context, tx pgx.Tx, id int) (user User, err error) {
 	query := `select * from users where id = $1`
+
 	if tx != nil {
 		err = tx.QueryRow(ctx, query, id).Scan(&user.ID, &user.Login, &user.Email, &user.Password)
 	} else {
@@ -61,6 +64,7 @@ func (r *Repository) GetByID(ctx context.Context, tx pgx.Tx, id int) (user User,
 
 func (r *Repository) DeleteUserByID(ctx context.Context, id int) error {
 	query := `delete from users where id = $1`
+	
 	_, err := r.pool.Exec(ctx, query, id)
 	return err
 }
