@@ -6,7 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . ./
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -o main AuthDB/cmd
 
 # Stage 2: PostgreSQL with custom configuration
 FROM postgres:latest as postgres-config
@@ -22,8 +22,8 @@ COPY --from=builder /app /app
 COPY public /app/public
 COPY db.env /app/db.env
 
-# RUN apk add --no-cache postgresql-client
-RUN apk add --no-cache postgresql14-client
+RUN apk add --no-cache postgresql-client
+# RUN apk add --no-cache postgresql14-client
 
 EXPOSE 4444
 

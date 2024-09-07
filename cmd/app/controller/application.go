@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"AuthDB/cmd/internal/kafka"
 	"AuthDB/cmd/app/repository"
-	"AuthDB/kafka"
 	"AuthDB/utils"
 	"context"
 	"fmt"
@@ -100,7 +100,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
-	// Creating kafka message 
+	// Creating kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 		"event": "login",
@@ -291,7 +291,7 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 		"timestamp": "%s",
 		}`, user.ID, time.Now().UTC().Format(time.RFC3339))),
 	}
-	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -322,7 +322,7 @@ func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) e
 			"timestamp": "%s"
 		}`, user.ID, newLogin, time.Now().UTC().Format(time.RFC3339))),
 	}
-	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
 
@@ -355,7 +355,7 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 			"timestamp": "%s"
 		}`, user.ID, newEmail, time.Now().UTC().Format(time.RFC3339))),
 	}
-	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
 	return fmt.Errorf("email already exists")
@@ -397,7 +397,7 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 			"timestamp": "%s"
 		}`, user.ID, newPassword, time.Now().UTC().Format(time.RFC3339))),
 	}
-	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
 	return err
@@ -445,7 +445,7 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 			"timestamp": "%s"
 		}`, user.ID, oldUsername, newUsername, newPassword, oldEmail, newEmail, time.Now().UTC().Format(time.RFC3339))),
 	}
-	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil{
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		fmt.Println("Failed to produce Kafka message:", err)
 	}
 }

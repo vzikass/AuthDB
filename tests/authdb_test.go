@@ -1,4 +1,5 @@
 // Simple tests of all the functionality of my project using transactions
+// All tests are very similar to each other, my task was to test the operation of the database
 package main
 
 import (
@@ -21,7 +22,7 @@ var (
 	ErrUserNotFound = errors.New("user not found")
 	dbURL           = "postgres://postgres:193566@testdb:5432/testdb"
 )
-
+// func to clear the db
 func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
 	_, err := pool.Exec(context.Background(), "TRUNCATE users RESTART IDENTITY")
 	if err != nil {

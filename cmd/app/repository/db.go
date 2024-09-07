@@ -9,8 +9,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var Dbpool *pgxpool.Pool
-var TestDbpool *pgxpool.Pool
+var(
+	Dbpool *pgxpool.Pool
+	TestDbpool *pgxpool.Pool
+) 
 
 func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err error) {
 	cfg, err := pgxpool.ParseConfig(dbURL)
@@ -18,6 +20,7 @@ func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err er
 		err = fmt.Errorf("failed to parse pg config: %v", err)
 		return
 	}
+
 	// MaxConns is the maximum size of the pool
 	cfg.MaxConns = int32(10)
 	cfg.MinConns = int32(1)
@@ -34,6 +37,7 @@ func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err er
 		err = fmt.Errorf("failed to connect config: %w", err)
 		return
 	}
+
 	TestDbpool = dbpool
 	Dbpool = dbpool
 	return
