@@ -123,7 +123,7 @@ func IsNumeric(s string) bool {
 
 func IsValidPassword(password string) bool {
 	var hasDigit, hasLetter bool
-	if len(password) < 5 {
+	if len(password) < 4 {
 		return false
 	}
 
@@ -159,8 +159,8 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		a.SignupPage(w, "Password mismatch")
 		return
 	}
-	if !IsValidPassword(password) {
-		a.SignupPage(w, "Minimum password length - 5 characters")
+	if IsValidPassword(password) {
+		a.SignupPage(w, "Minimum password length - 4 characters")
 		return
 	}
 	if len(login) <= 4 {
