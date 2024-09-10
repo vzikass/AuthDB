@@ -60,24 +60,29 @@ func (a *App) Routes(r *httprouter.Router) {
 func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	login := r.FormValue("login")
 	password := r.FormValue("password")
+
 	if login == "" || password == "" {
 		a.LoginPage(w, "You must provide a login and password")
 		return
 	}
+
 	user, err := a.repo.Login(a.ctx, nil, login)
 	if err != nil {
 		a.LoginPage(w, "User not found")
 		return
 	}
+
 	if !utils.CompareHashPassword(password, user.Password) {
 		a.LoginPage(w, "Incorrect password")
 		return
 	}
+
 	token, err := utils.GenerateJWT(user.Login)
 	if err != nil {
 		log.Fatalf("Error generate token: %v", err)
 		return
 	}
+
 	// to protect access to hash
 	a.cacheMu.Lock()
 	a.cache[token] = user
@@ -100,6 +105,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
+
 	// Creating kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
@@ -109,6 +115,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		"timestamp": "%s"
 		}`, user.ID, user.Email, time.Now().UTC().Format(time.RFC3339))),
 	}
+	// Produce kafka message
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
@@ -151,7 +158,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		a.SignupPage(w, "Not all fields are filled in")
 		return
 	}
-	if IsNumeric(login) {
+	if !IsNumeric(login) {
 		a.SignupPage(w, "Login cannot be entirely numeric")
 		return
 	}
@@ -159,8 +166,8 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		a.SignupPage(w, "Password mismatch")
 		return
 	}
-	if IsValidPassword(password) {
-		a.SignupPage(w, "Minimum password length - 4 characters")
+	if !IsValidPassword(password) {
+		a.SignupPage(w, "The password should not contain only numbers or letters")
 		return
 	}
 	if len(login) <= 4 {
