@@ -1,3 +1,4 @@
+// This file contains the rendering of html templates
 package controller
 
 import (
