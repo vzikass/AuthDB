@@ -33,6 +33,9 @@ func (r *Repository) Login(ctx context.Context, tx pgx.Tx, login string) (u User
 	return u, nil
 }
 
+// Checking if such a user already exists.
+// If user already exists with the same login and email,
+// then count will be > 0
 func (r *Repository) UserExist(ctx context.Context, tx pgx.Tx, login, email string) (exist bool, err error) {
 	var count int
 	query := `select count(*) from users where login = $1 or email = $2`
@@ -73,6 +76,7 @@ func (r *Repository) UpdateData(ctx context.Context, query, new, old string) err
 	_, err := r.pool.Exec(ctx, query, new, old)
 	return err
 }
+
 func (r *Repository) FindUserByEmail(ctx context.Context, email string) (u User, err error) {
 	row := r.pool.QueryRow(ctx, `select id, login, email, password from users where email = $1`,
 		email)
@@ -82,6 +86,7 @@ func (r *Repository) FindUserByEmail(ctx context.Context, email string) (u User,
 	}
 	return u, nil
 }
+
 func (r *Repository) FindUserByPassword(ctx context.Context, password string) (u User, err error) {
 	row := r.pool.QueryRow(ctx, `select id, login, email, password from users where password = $1`,
 		password)
@@ -91,6 +96,7 @@ func (r *Repository) FindUserByPassword(ctx context.Context, password string) (u
 	}
 	return u, nil
 }
+
 func (r *Repository) FindUserByLogin(ctx context.Context, login string) (u User, err error) {
 	row := r.pool.QueryRow(ctx, `select id, login, email, password from users where login = $1`,
 		login)

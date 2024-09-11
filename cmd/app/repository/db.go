@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
-
+	
 	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/lib/pq"
 )
@@ -12,8 +12,9 @@ import (
 var(
 	Dbpool *pgxpool.Pool
 	TestDbpool *pgxpool.Pool
-) 
-
+	) 
+	
+// Initialize maindb and testdb
 func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err error) {
 	cfg, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {

@@ -26,6 +26,10 @@ type App struct {
 	cacheMu sync.Mutex
 }
 
+var (
+	mu sync.Mutex
+)
+
 func NewApp(ctx context.Context, dbpool *pgxpool.Pool) *App {
 	return &App{ctx: ctx, repo: repository.NewRepository(dbpool),
 		cache: make(map[string]repository.User)}
@@ -145,6 +149,7 @@ func IsValidPassword(password string) bool {
 			return true
 		}
 	}
+	
 	return hasDigit && hasLetter
 }
 
@@ -154,31 +159,33 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 	email := strings.TrimSpace(r.FormValue("email"))
 	password := strings.TrimSpace(r.FormValue("password"))
 	repassword := strings.TrimSpace(r.FormValue("repassword"))
+
 	if login == "" || email == "" || password == "" || repassword == "" {
 		a.SignupPage(w, "Not all fields are filled in")
 		return
 	}
-	if !IsNumeric(login) {
-		a.SignupPage(w, "Login cannot be entirely numeric")
-		return
-	}
+
 	if password != repassword {
 		a.SignupPage(w, "Password mismatch")
 		return
 	}
+
 	if !IsValidPassword(password) {
 		a.SignupPage(w, "The password should not contain only numbers or letters")
 		return
 	}
+
 	if len(login) <= 4 {
 		a.SignupPage(w, "Minimum login length - 4 characters")
 		return
 	}
+
 	userExist, err := a.repo.UserExist(a.ctx, nil, login, email)
 	if err != nil {
 		a.SignupPage(w, "Error checking existing user")
 		return
 	}
+
 	if userExist {
 		a.SignupPage(w, "User already created")
 		return
@@ -252,7 +259,9 @@ func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
+		mu.Lock()
 		_, ok := a.cache[token]
+		mu.Unlock()
 		if !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
@@ -354,6 +363,7 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 		return nil
 	}
 	a.UpdateUserPage(w, "This email already exists")
+
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 			"event": "update_password",
@@ -395,7 +405,9 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
+	a.UpdateUserPage(w, "Passwords need to be different")
 	user.Password = hashedNewPassword
+
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 			"event": "update_password",
