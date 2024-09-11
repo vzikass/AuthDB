@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
@@ -52,7 +54,11 @@ func main() {
 		}
 	}()
 	
-
-
-
+	// we need to reserve to buffer size 1, so the notifier are not blocked
+	exit := make(chan os.Signal, 1)
+	// The operating system sends a shutdown signal to a process when it wants to terminate it gracefully
+	signal.Notify(exit, os.Interrupt, syscall.SIGTERM)
+	// program is blocked until the channel receives a signal. 
+	// waiting to receive a signal such as os.Interrupt or syscall.SIGTERM
+	<- exit
 }

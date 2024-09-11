@@ -23,7 +23,6 @@ COPY public /app/public
 COPY db.env /app/db.env
 
 RUN apk add --no-cache postgresql-client
-# RUN apk add --no-cache postgresql14-client
 
 EXPOSE 4444
 
