@@ -8,16 +8,15 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync"
 
 	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
 )
 
-var wg sync.WaitGroup
-
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Load from .env file
 	if err := godotenv.Load("./db.env"); err != nil {
 		log.Fatalf("Failed to load db.env: %v", err)
@@ -40,14 +39,20 @@ func main() {
 	mainRouter := httprouter.New()
 	app.Routes(mainRouter)
 
+	server := &http.Server{
+		Addr: "0.0.0.0:4444",
+		Handler: mainRouter,
+	}
+
 	// Start main app
-	wg.Add(1)
 	go func() {
 		log.Println("Starting main HTTP server on port 4444")
-		if err := http.ListenAndServe("0.0.0.0:4444", mainRouter); err != nil {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Main server failed: %v", err)
 		}
-		defer wg.Done()
 	}()
-	wg.Wait()
+	
+
+
+
 }

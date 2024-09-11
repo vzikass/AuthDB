@@ -13,11 +13,11 @@ func CreateTopicIfNotExist(brokers []string, topic string) error {
 		return err
 	}
 	defer admin.Close()
-	// Check if the topic exists
 	topics, err := admin.ListTopics()
 	if err != nil {
 		return err
 	}
+	// Check if the topic exists
 	if _, exist := topics[topic]; !exist {
 		// Create the topic if it doesn't exist
 		topicDetail := &sarama.TopicDetail{

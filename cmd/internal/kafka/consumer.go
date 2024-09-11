@@ -12,6 +12,7 @@ func ConsumeMessage(brokers []string, topic string) error{
 		return err
 	}
 	defer partitionConsumer.Close()
+	
 	for msg := range partitionConsumer.Messages(){
 		log.Printf("Received Message: %s", string(msg.Value))
 	}

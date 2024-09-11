@@ -18,7 +18,8 @@ type User struct {
 var (
 	HashPassword string
 )
-
+// Creating new user.
+// User struct receives hashed password
 func NewUser(login, email, password string) (*User, error) {
 	hashedPassword, err := utils.GenerateHash(password)
 	if err != nil {
@@ -32,6 +33,7 @@ func NewUser(login, email, password string) (*User, error) {
 	}
 	return user, nil
 }
+
 func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 	var err error
 	var users []User
