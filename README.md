@@ -30,7 +30,6 @@ _also if you go to http://localhost:4444/users you can see your account and othe
 + HTTP request methods.
 + Querying the database.
 + Docker image and containers.
-+ Kubernetes([minikube](https://kubernetes.io/docs/tutorials/hello-minikube/)) ~~not used in this project~~
 + CI/CD (Github Actions)
 + Git/Github
 + Postman
