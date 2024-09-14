@@ -26,10 +26,6 @@ type App struct {
 	cacheMu sync.Mutex
 }
 
-var (
-	mu sync.Mutex
-)
-
 func NewApp(ctx context.Context, dbpool *pgxpool.Pool) *App {
 	return &App{ctx: ctx, repo: repository.NewRepository(dbpool),
 		cache: make(map[string]repository.User)}
@@ -76,11 +72,13 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		return
 	}
 
+	// Compare user password and login password using byte
 	if !utils.CompareHashPassword(password, user.Password) {
 		a.LoginPage(w, "Incorrect password")
 		return
 	}
 
+	// Generate JWT-token with user login
 	token, err := utils.GenerateJWT(user.Login)
 	if err != nil {
 		log.Fatalf("Error generate token: %v", err)
@@ -95,12 +93,16 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	// creating cookies with check button remember me
 	rememberMe := r.FormValue("remember_me") == "on"
 	var livingTime time.Duration
+	// if true, the cookie will be kept for 15 days
+	// else 1 hour
 	if rememberMe {
 		livingTime = 24 * time.Hour * 15
 	} else {
 		livingTime = 1 * time.Hour
 	}
+	// remember livingTime 
 	expiration := time.Now().Add(livingTime)
+	// Create cookie 
 	cookie := http.Cookie{
 		Name:     "token",
 		Value:    url.QueryEscape(token),
@@ -132,6 +134,7 @@ func IsNumeric(s string) bool {
 	return re.MatchString(s)
 }
 
+// Checking the password for valid letters and digits
 func IsValidPassword(password string) bool {
 	var hasDigit, hasLetter bool
 	if len(password) < 4 {
@@ -190,6 +193,9 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		a.SignupPage(w, "User already created")
 		return
 	}
+
+	// create a new user and add it to the database in goroutine
+	// errors are written to the channel
 	errCh := make(chan error)
 	go func() {
 		defer close(errCh)
@@ -205,11 +211,14 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		}
 		errCh <- nil
 	}()
+	// read from channel
+	// make sure err == nil, if it is, a kafka message is created
 	err = <-errCh
 	if err != nil {
 		a.SignupPage(w, err.Error())
 		return
 	}
+	// Create kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 			"event": "signup",
@@ -218,14 +227,17 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 			"timestamp": "%s"
 		}`, user.ID, user.Email, time.Now().UTC().Format(time.RFC3339))),
 	}
+
+	// Produce kafka message
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
 	a.LoginPage(w, fmt.Sprintln("Successful signup!"))
 }
 
+// A simple function to delete a user's cookie
+// To log him out
 func (a *App) Logout(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	// To exit we can delete cookies
 	for _, v := range r.Cookies() {
 		c := http.Cookie{
 			Name:   v.Name,
@@ -236,36 +248,50 @@ func (a *App) Logout(w http.ResponseWriter, r *http.Request, p httprouter.Params
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
+// Read cookie
 func ReadCookie(name string, r *http.Request) (value string, err error) {
 	if name == "" {
 		return value, err
 	}
+
+	// Read cookie by name
+	// Returns a cookie or gives an error if no cookie with this name is found
 	cookie, err := r.Cookie(name)
 	if err != nil {
 		return value, err
 	}
+	// cookie string
 	str := cookie.Value
+	// decode the string 
 	value, err = url.QueryUnescape(str)
 	if err != nil {
 		return value, err
 	}
 	return value, err
 }
-
+// check user authorization
 func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		// read cookie, if err != nil, user is not authorized
+		// so redirect it to /login
 		token, err := ReadCookie("token", r)
 		if err != nil {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
-		mu.Lock()
+		// read token 
+		// lock access to the cache while we work with it
+		a.cacheMu.Lock()
 		_, ok := a.cache[token]
-		mu.Unlock()
+		a.cacheMu.Unlock()
+		// if ok == false (token not found)
+		// redirect to login 
 		if !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
+		// if ok == true (token found)
+		// continue processing the request
 		next(w, r, p)
 	}
 }
