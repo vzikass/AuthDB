@@ -1,3 +1,5 @@
+// the main logic with all endpoints can be found here
+
 package controller
 
 import (
