@@ -26,10 +26,6 @@ type App struct {
 	cacheMu sync.Mutex
 }
 
-var (
-	mu sync.Mutex
-)
-
 func NewApp(ctx context.Context, dbpool *pgxpool.Pool) *App {
 	return &App{ctx: ctx, repo: repository.NewRepository(dbpool),
 		cache: make(map[string]repository.User)}
@@ -76,11 +72,13 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		return
 	}
 
+	// Compare user password and login password using byte
 	if !utils.CompareHashPassword(password, user.Password) {
 		a.LoginPage(w, "Incorrect password")
 		return
 	}
 
+	// Generate JWT-token with user login
 	token, err := utils.GenerateJWT(user.Login)
 	if err != nil {
 		log.Fatalf("Error generate token: %v", err)
@@ -95,12 +93,16 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	// creating cookies with check button remember me
 	rememberMe := r.FormValue("remember_me") == "on"
 	var livingTime time.Duration
+	// if true, the cookie will be kept for 15 days
+	// else 1 hour
 	if rememberMe {
 		livingTime = 24 * time.Hour * 15
 	} else {
 		livingTime = 1 * time.Hour
 	}
+	// remember livingTime 
 	expiration := time.Now().Add(livingTime)
+	// Create cookie 
 	cookie := http.Cookie{
 		Name:     "token",
 		Value:    url.QueryEscape(token),
@@ -132,6 +134,7 @@ func IsNumeric(s string) bool {
 	return re.MatchString(s)
 }
 
+// Checking the password for valid letters and digits
 func IsValidPassword(password string) bool {
 	var hasDigit, hasLetter bool
 	if len(password) < 4 {
@@ -190,6 +193,9 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		a.SignupPage(w, "User already created")
 		return
 	}
+
+	// create a new user and add it to the database in goroutine
+	// errors are written to the channel
 	errCh := make(chan error)
 	go func() {
 		defer close(errCh)
@@ -205,11 +211,14 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		}
 		errCh <- nil
 	}()
+	// read from channel
+	// make sure err == nil, if it is, a kafka message is created
 	err = <-errCh
 	if err != nil {
 		a.SignupPage(w, err.Error())
 		return
 	}
+	// Create kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 			"event": "signup",
@@ -218,14 +227,17 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 			"timestamp": "%s"
 		}`, user.ID, user.Email, time.Now().UTC().Format(time.RFC3339))),
 	}
+
+	// Produce kafka message
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
 	a.LoginPage(w, fmt.Sprintln("Successful signup!"))
 }
 
+// A simple function to delete a user's cookie
+// To log him out
 func (a *App) Logout(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	// To exit we can delete cookies
 	for _, v := range r.Cookies() {
 		c := http.Cookie{
 			Name:   v.Name,
@@ -236,63 +248,82 @@ func (a *App) Logout(w http.ResponseWriter, r *http.Request, p httprouter.Params
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
+// Read cookie
 func ReadCookie(name string, r *http.Request) (value string, err error) {
 	if name == "" {
 		return value, err
 	}
+
+	// Read cookie by name
+	// Returns a cookie or gives an error if no cookie with this name is found
 	cookie, err := r.Cookie(name)
 	if err != nil {
 		return value, err
 	}
+	// cookie string
 	str := cookie.Value
+	// decode the string 
 	value, err = url.QueryUnescape(str)
 	if err != nil {
 		return value, err
 	}
 	return value, err
 }
-
+// check user authorization
 func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		// read cookie, if err != nil, user is not authorized
+		// so redirect it to /login
 		token, err := ReadCookie("token", r)
 		if err != nil {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
-		mu.Lock()
+		// read token 
+		// lock access to the cache while we work with it
+		a.cacheMu.Lock()
 		_, ok := a.cache[token]
-		mu.Unlock()
+		a.cacheMu.Unlock()
+		// if ok == false (token not found)
+		// redirect to login 
 		if !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
+		// if ok == true (token found)
+		// continue processing the request
 		next(w, r, p)
 	}
 }
 
+// delete account with user id
 func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	// read cookie
 	token, err := ReadCookie("token", r)
 	if err != nil {
 		log.Printf("Error reading token cookie: %v", err)
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-
+	// cache lookup
 	user, ok := a.cache[token]
+	// if not found redirect to login
 	if !ok {
 		log.Printf("Token not found in cache")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-
+	// if found delete user by id
 	err = a.repo.DeleteUserByID(a.ctx, user.ID)
 	if err != nil {
 		log.Printf("Error deleting user by ID: %v", err)
 		http.Error(w, "Something went wrong, please try later", http.StatusInternalServerError)
 		return
 	}
+	// delete token from cache (map)
 	delete(a.cache, token)
 
+	// delete cookie to logout
 	for _, v := range r.Cookies() {
 		c := http.Cookie{
 			Name:   v.Name,
@@ -300,6 +331,7 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 		}
 		http.SetCookie(w, &c)
 	}
+	// Create kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 		"event": "delete_account",
@@ -307,20 +339,25 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 		"timestamp": "%s",
 		}`, user.ID, time.Now().UTC().Format(time.RFC3339))),
 	}
+	// Produce this message
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
+// The following 3 functions are the same
+// only they update different data and queries to the database
+// also kafka messages are created 
 func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) error {
 	user, err := a.repo.FindUserByLogin(a.ctx, oldLogin)
 	if err != nil {
 		a.UpdateUserPage(w, "User not found")
 		return err
 	}
-
+	// old and new login must not be the same
 	if user.Login != newLogin {
+		// set a new login if they do not match
 		query := `UPDATE users SET login = $1 WHERE login = $2`
 		err = a.repo.UpdateData(a.ctx, query, newLogin, oldLogin)
 		if err != nil {
@@ -329,7 +366,7 @@ func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) e
 		}
 		return nil
 	}
-
+	// create kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 			"event": "update_password",
@@ -338,6 +375,7 @@ func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) e
 			"timestamp": "%s"
 		}`, user.ID, newLogin, time.Now().UTC().Format(time.RFC3339))),
 	}
+	// produce it
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
@@ -352,8 +390,9 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 		a.UpdateUserPage(w, "User not found")
 		return err
 	}
-
+	// old and new email must not be the same
 	if user.Email != newEmail {
+		// set new email
 		query := `UPDATE users SET email = $1 WHERE email = $2`
 		err = a.repo.UpdateData(a.ctx, query, newEmail, oldEmail)
 		if err != nil {
@@ -363,7 +402,7 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 		return nil
 	}
 	a.UpdateUserPage(w, "This email already exists")
-
+	// create kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 			"event": "update_password",
@@ -372,6 +411,7 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 			"timestamp": "%s"
 		}`, user.ID, newEmail, time.Now().UTC().Format(time.RFC3339))),
 	}
+	// produce it
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
@@ -383,20 +423,21 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 	if len(newPassword) <= 3 {
 		a.UpdateUserPage(w, "Minimum field length - 4 characters")
 	}
-
+	// user search by old hashed password
 	user, err := a.repo.FindUserByPassword(a.ctx, userHashedPass)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
-
+	// generate new hashed password
 	hashedNewPassword, err := utils.GenerateHash(newPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
-
+	// old password (not hashed) and new password must not be the same
 	if user.Password != newPassword {
+		// set net password
 		query := `UPDATE users SET password = $1 WHERE password = $2`
 		err = a.repo.UpdateData(a.ctx, query, hashedNewPassword, userHashedPass)
 		if err != nil {
@@ -406,8 +447,8 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 	a.UpdateUserPage(w, "Passwords need to be different")
-	user.Password = hashedNewPassword
-
+	user.Password = hashedNewPassword	
+	// create kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 			"event": "update_password",
@@ -416,20 +457,25 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 			"timestamp": "%s"
 		}`, user.ID, newPassword, time.Now().UTC().Format(time.RFC3339))),
 	}
+	// produce it
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
 	return err
 }
 
+// 
 func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	user := repository.User{}
+	// read lines 
 	oldUsername := r.FormValue("oldLogin")
 	newUsername := r.FormValue("newLogin")
 	oldEmail := r.FormValue("oldEmail")
 	newEmail := r.FormValue("newEmail")
 	newPassword := r.FormValue("newPassword")
 
+	// will work a case where the string != ""
+	// then update data
 	if oldUsername != "" && newUsername != "" {
 		err := a.UpdateUsername(w, oldUsername, newUsername)
 		if err != nil {
@@ -452,6 +498,7 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 		http.Error(w, "No valid update data provided", http.StatusBadRequest)
 		return
 	}
+	// create kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
 			"event": "update_data",
@@ -464,6 +511,7 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 			"timestamp": "%s"
 		}`, user.ID, oldUsername, newUsername, newPassword, oldEmail, newEmail, time.Now().UTC().Format(time.RFC3339))),
 	}
+	// produce it
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		fmt.Println("Failed to produce Kafka message:", err)
 	}

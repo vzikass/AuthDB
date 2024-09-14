@@ -13,6 +13,7 @@ var (
     Topic   = "authdb-topic"
 )
 
+// The struct into which we will record Kafka's message
 type Message struct{
 	Value []byte
 }
