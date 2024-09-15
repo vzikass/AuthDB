@@ -1,3 +1,5 @@
+// If you see tx, then this function is interacting with the transaction
+// If you need to use a transaction, then tx should not be nill
 package repository
 
 import (
@@ -15,7 +17,6 @@ type Repository struct {
 func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
-
 func (r *Repository) Login(ctx context.Context, tx pgx.Tx, login string) (u User, err error) {
 	query := `select id, login, password, email from users where login = $1`
 
