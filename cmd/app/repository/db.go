@@ -12,7 +12,7 @@ import (
 var(
 	Dbpool *pgxpool.Pool
 	TestDbpool *pgxpool.Pool
-	) 
+) 
 	
 // Initialize maindb and testdb
 func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err error) {
@@ -32,7 +32,7 @@ func InitDBConn(ctx context.Context, dbURL string) (dbpool *pgxpool.Pool, err er
 	// It's like maxconnlifetime but it'll be closed by the health check.
 	cfg.MaxConnIdleTime = 30 * time.Minute
 	cfg.ConnConfig.ConnectTimeout = 5 * time.Second
-
+	
 	dbpool, err = pgxpool.ConnectConfig(ctx, cfg)
 	if err != nil {
 		err = fmt.Errorf("failed to connect config: %w", err)

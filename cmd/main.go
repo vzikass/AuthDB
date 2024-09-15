@@ -31,7 +31,6 @@ func main() {
 	}
 
 	// Init Kafka | producer | consumer
-
 	kafka.InitKafka()
 	defer kafka.Producer.Close()
 	defer kafka.Consumer.Close()
@@ -54,6 +53,9 @@ func main() {
 		}
 	}()
 	
+	// --------------
+	// Graceful shutdown? :)
+
 	// we need to reserve to buffer size 1, so the notifier are not blocked
 	exit := make(chan os.Signal, 1)
 	// The operating system sends a shutdown signal to a process when it wants to terminate it gracefully

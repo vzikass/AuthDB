@@ -31,6 +31,7 @@ func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
 }
 
 func RunWithTransactions(t *testing.T, fn func(tx pgx.Tx) error) {
+	ctx := context.Background()
 	pool, err := repository.InitDBConn(context.Background(), dbURL)
 	if err != nil {
 		log.Fatalf("Error initializing Test DB connection: %v\n", err)
@@ -39,7 +40,8 @@ func RunWithTransactions(t *testing.T, fn func(tx pgx.Tx) error) {
 
 	// Clear DB before starting transaction
 	clearDatabase(t, pool)
-
+	
+	// Start transaction
 	tx, err := pool.Begin(context.Background())
 	if err != nil {
 		t.Fatalf("Failed to start transaction: %v", err)
@@ -47,12 +49,12 @@ func RunWithTransactions(t *testing.T, fn func(tx pgx.Tx) error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			tx.Rollback(context.Background())
+			tx.Rollback(ctx)
 			panic(r)
 		} else if err != nil {
-			tx.Rollback(context.Background())
+			tx.Rollback(ctx)
 		} else {
-			tx.Commit(context.Background())
+			tx.Commit(ctx)
 		}
 	}()
 

@@ -123,7 +123,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		"timestamp": "%s"
 		}`, user.ID, user.Email, time.Now().UTC().Format(time.RFC3339))),
 	}
-	// Produce kafka message
+	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
@@ -230,7 +230,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		}`, user.ID, user.Email, time.Now().UTC().Format(time.RFC3339))),
 	}
 
-	// Produce kafka message
+	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
@@ -341,7 +341,8 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 		"timestamp": "%s",
 		}`, user.ID, time.Now().UTC().Format(time.RFC3339))),
 	}
-	// Produce this message
+	
+	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
@@ -377,7 +378,8 @@ func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) e
 			"timestamp": "%s"
 		}`, user.ID, newLogin, time.Now().UTC().Format(time.RFC3339))),
 	}
-	// produce it
+	
+	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
@@ -413,7 +415,8 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 			"timestamp": "%s"
 		}`, user.ID, newEmail, time.Now().UTC().Format(time.RFC3339))),
 	}
-	// produce it
+	
+	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
@@ -459,7 +462,8 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 			"timestamp": "%s"
 		}`, user.ID, newPassword, time.Now().UTC().Format(time.RFC3339))),
 	}
-	// produce it
+	
+	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
 	}
@@ -513,7 +517,8 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 			"timestamp": "%s"
 		}`, user.ID, oldUsername, newUsername, newPassword, oldEmail, newEmail, time.Now().UTC().Format(time.RFC3339))),
 	}
-	// produce it
+	
+	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		fmt.Println("Failed to produce Kafka message:", err)
 	}
