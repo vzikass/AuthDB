@@ -1,3 +1,4 @@
+// verification of correct connection and execution of migrations
 package tests
 
 import (
@@ -14,19 +15,20 @@ var testDB *sql.DB
 func TestMain(m *testing.M) {
 	var err error
 
-	testDB, err = sql.Open("postgres", "user=youruser dbname=testdb sslmode=disable")
+	testDB, err = sql.Open("postgres", "user=postgres dbname=testdb sslmode=disable")
 	if err != nil {
 		log.Fatalf("Failed to connect to test database: %v", err)
 	}
 	defer testDB.Close()
-
+	
+	// up migrations 
 	err = goose.Up(testDB, "/migrations")
 	if err != nil{
 		log.Fatalf("Failed to apply migrations: %v", err)
 	}
 
 	code := m.Run()
-
+	// down migrations 
 	err = goose.Down(testDB, "/migrations")
 	if err != nil{
 		log.Fatalf("Failed to rollback migrations: %v", err)
