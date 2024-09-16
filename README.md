@@ -23,13 +23,13 @@ _also if you go to http://localhost:4444/users you can see your account and othe
 -----------
 
 **AuthDB** is a project I wrote to practice the following things:
-+ User registration with automatic addition of the user to the database.
-  + The password is automatically hashed and the database receives the already hashed password.
-+ User authentication by [JWT](https://jwt.io/introduction) (json web token).
-+ Creating a cookie for the user.
-+ HTTP request methods.
-+ Querying the database.
-+ Docker image and containers.
++ User registration with automatic addition of the user to the database
+  + The password is automatically hashed and the database receives the already hashed password
++ User authentication by [JWT](https://jwt.io/introduction)
++ Creating a cookie for the user
++ HTTP request methods
++ Querying the database
++ Docker image and containers
 + CI/CD (Github Actions)
 + Git/Github
 + Postman
@@ -40,8 +40,6 @@ _also if you go to http://localhost:4444/users you can see your account and othe
 And other things I've encountered in the writing process.
 
 *This list will grow as I apply what I've learned to it.* 
-
-[Here is the answer to your probably first question when you see this project](https://github.com/vzikass/AuthDB?tab=readme-ov-file#why-did-i-develop-this-project)
 
 ## Project launch
 ### Requirements
