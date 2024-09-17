@@ -1,3 +1,4 @@
+// The creation of the topic is done in the docker compose file
 package kafka
 
 import (
@@ -17,6 +18,7 @@ func CreateTopicIfNotExist(brokers []string, topic string) error {
 	if err != nil {
 		return err
 	}
+
 	// Check if the topic exists
 	if _, exist := topics[topic]; !exist {
 		// Create the topic if it doesn't exist

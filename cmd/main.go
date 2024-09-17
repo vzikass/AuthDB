@@ -41,7 +41,7 @@ func main() {
 	app.Routes(mainRouter)
 
 	server := &http.Server{
-		Addr: "0.0.0.0:4444",
+		Addr:    "0.0.0.0:4444",
 		Handler: mainRouter,
 	}
 
@@ -52,7 +52,7 @@ func main() {
 			log.Fatalf("Main server failed: %v", err)
 		}
 	}()
-	
+
 	// --------------
 	// Graceful shutdown? :)
 
@@ -60,7 +60,7 @@ func main() {
 	exit := make(chan os.Signal, 1)
 	// The operating system sends a shutdown signal to a process when it wants to terminate it gracefully
 	signal.Notify(exit, os.Interrupt, syscall.SIGTERM)
-	// program is blocked until the channel receives a signal. 
+	// program is blocked until the channel receives a signal.
 	// waiting to receive a signal such as os.Interrupt or syscall.SIGTERM
-	<- exit
+	<-exit
 }
