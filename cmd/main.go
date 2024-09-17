@@ -20,7 +20,7 @@ func main() {
 	defer cancel()
 
 	// Load from .env file
-	if err := godotenv.Load("./db.env"); err != nil {
+	if err := godotenv.Load("/app/configs/db.env"); err != nil {
 		log.Fatalf("Failed to load db.env: %v", err)
 	}
 

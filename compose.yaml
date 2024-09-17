@@ -101,6 +101,8 @@ services:
       start_period: 30s
       timeout: 5s
     restart: unless-stopped
+    env_file:
+      - ./configs/db.env
     networks:
       - mynetwork
 
@@ -124,6 +126,9 @@ services:
       kafka-2:
         condition: service_healthy
     restart: unless-stopped
+    env_file:
+      - ./configs/db.env
+      - ./configs/jwt.env
     networks:
       - mynetwork
 
