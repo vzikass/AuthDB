@@ -6,7 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . ./
-COPY db.env /app/db.env
+COPY ./configs/db.env /app/configs/db.env
 
 CMD ["go", "test", "-timeout", "30s", "./..."]
 

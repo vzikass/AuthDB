@@ -20,7 +20,7 @@ WORKDIR /app
 
 COPY --from=builder /app /app
 COPY public /app/public
-COPY db.env /app/db.env
+COPY ./configs/db.env /app/configs/db.env
 
 RUN apk add --no-cache postgresql-client
 
