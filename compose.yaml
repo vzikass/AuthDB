@@ -102,7 +102,7 @@ services:
       timeout: 5s
     restart: unless-stopped
     env_file:
-      - ./db.env
+      - ./configs/db.env
     networks:
       - mynetwork
 
@@ -127,8 +127,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
     env_file:
-      - ./db.env
-      - ./jwt.env
+      - ./configs/db.env
+      - ./configs/jwt.env
     networks:
       - mynetwork
 
@@ -183,8 +183,6 @@ services:
         condition: service_healthy
     # commands to keep the test container running 
     command: ["sh", "-c", "tail -f /dev/null"] 
-    env_file:
-      - ./db.env
     networks:
       - mynetwork
 
