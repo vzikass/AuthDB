@@ -31,9 +31,9 @@ func main() {
 	}
 
 	// Init Kafka | producer | consumer
-	kafka.InitKafka()
-	defer kafka.Producer.Close()
-	defer kafka.Consumer.Close()
+	producer, consumer := kafka.InitKafka()
+	defer producer.Close()
+	defer consumer.Close()
 
 	// Main app
 	app := controller.NewApp(ctx, dbpool)
