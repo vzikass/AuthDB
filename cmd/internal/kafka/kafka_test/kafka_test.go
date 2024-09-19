@@ -6,25 +6,12 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/stretchr/testify/mock"
+	"AuthDB/mocks"
 )
-
-// Mock for Sarama SyncProducer
-type MockSyncProducer struct {
-	mock.Mock
-}
-
-type MockConsumer struct {
-	mock.Mock
-}
-
-func (m *MockSyncProducer) SendMessage(msg *sarama.ProducerMessage) (partition int32, offset int64, err error) {
-	args := m.Called(msg)
-	return args.Get(0).(int32), args.Get(1).(int64), args.Error(2)
-}
 
 func TestProducerMessage(t *testing.T) {
 	// Create mock producer
-	mockProducer := new(MockSyncProducer)
+	mockProducer := new(mocks.ProducerInterface)
 
 	// Mock the behavior of SendMessage
 	mockProducer.On("SendMessage", mock.Anything).Return(int32(0), int64(0), nil)
@@ -39,23 +26,24 @@ func TestProducerMessage(t *testing.T) {
 	mockProducer.AssertExpectations(t)
 }
 
-func (m *MockConsumer) ConsumePartition(topic string, partition int32, offset int64) (sarama.PartitionConsumer, error) {
-	args := m.Called(topic, partition, offset)
-	return args.Get(0).(sarama.PartitionConsumer), args.Error(1)
-}
-
 func TestConsumerMessage(t *testing.T) {
 	// Create mock Consumer
-	mockConsumer := new(MockConsumer)
+	mockConsumer := new(mocks.ConsumerInterface)
 
+	// Create a mock PartitionConsumer
+	mockPartitionConsumer := new(mocks.PartitionConsumerInterface)
+	// Setup mock behavior for messages channel
+	mockMessagesChannel := make(chan *sarama.ConsumerMessage)
+	close(mockMessagesChannel)
+	mockPartitionConsumer.On("Messages").Return((<-chan *sarama.ConsumerMessage)(mockMessagesChannel))
+	mockPartitionConsumer.On("Close").Return(nil)
 	// Mock the behavior of ConsumePartition
-	mockPartitionConsumer := new(kafka.MockPartitionConsumer)
 	mockConsumer.On("ConsumePartition", "authdb_topic", int32(0), sarama.OffsetNewest).Return(mockPartitionConsumer, nil)
 
 	kafka.Consumer = mockConsumer
 
-	err := kafka.ConsumeMessage([]string{"localhost:9092"}, "authdb-topic")
-	if err != nil{
+	err := kafka.ConsumeMessage([]string{"localhost:9092"}, "authdb_topic")
+	if err != nil {
 		t.Fatalf("Failed to consume message: %v", err)
 	}
 	mockConsumer.AssertExpectations(t)

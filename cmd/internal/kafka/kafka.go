@@ -11,16 +11,25 @@ type ProducerInterface interface {
     SendMessage(msg *sarama.ProducerMessage) (partition int32, offset int64, err error)
 }
 // Interface for the consumer
-type ConsumerInterface interface{
-	ConsumePartition(topic string, partition int32, offset int64) (sarama.PartitionConsumer, error)
-}
-// Mock struct for PartitionConsumer
-type MockPartitionConsumer struct {
-	Messages chan *sarama.ConsumerMessage
-	Errors   chan *sarama.ConsumerError
+type ConsumerInterface interface {
+    ConsumePartition(topic string, partition int32, offset int64) (sarama.PartitionConsumer, error)
 }
 
-
+// New Interface for the PartitionConsumer
+type PartitionConsumerInterface interface {
+    AsyncClose()
+    Close() error
+    Messages() <-chan *sarama.ConsumerMessage
+    Errors() <-chan *sarama.ConsumerError
+    HighWaterMarkOffset() int64
+    IsPaused() bool
+	Pause()
+    Resume()
+    Topic() string
+    Partition() int32
+    InitialOffset() int64
+    Lag() int64
+}
 
 var (
 	Producer ProducerInterface
@@ -28,7 +37,6 @@ var (
 	Brokers = []string{"localhost:9092"}
     Topic   = "authdb-topic"
 )
-
 
 // The struct into which we will record Kafka's message
 type Message struct{
