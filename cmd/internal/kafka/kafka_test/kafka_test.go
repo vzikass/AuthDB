@@ -4,9 +4,10 @@ import (
 	"AuthDB/cmd/internal/kafka"
 	"testing"
 
+	"AuthDB/mocks"
+
 	"github.com/IBM/sarama"
 	"github.com/stretchr/testify/mock"
-	"AuthDB/mocks"
 )
 
 func TestProducerMessage(t *testing.T) {
@@ -18,7 +19,7 @@ func TestProducerMessage(t *testing.T) {
 
 	// Substitute the global variable Producer for mock-producer
 	kafka.Producer = mockProducer
-
+	// Sending a test message 
 	err := kafka.ProduceMessage([]string{"localhost:9092"}, "authdb-topic", "testmessage")
 	if err != nil {
 		t.Fatalf("Failed to produce message: %v", err)
