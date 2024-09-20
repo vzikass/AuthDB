@@ -16,6 +16,7 @@ type ConsumerInterface interface {
 }
 
 // New Interface for the PartitionConsumer
+// Using by mocks
 type PartitionConsumerInterface interface {
     AsyncClose()
     Close() error
@@ -44,12 +45,6 @@ type Message struct{
 }
 
 func InitKafka() (producer sarama.SyncProducer, consumer sarama.Consumer){
-	// Create Topic
-	// if err := CreateTopic(Brokers, Topic, 1, 1); err != nil{
-	// 	log.Fatalf("Failed to create topic: %v", err)
-	// }
-	// log.Println("Topic created successfully")
-
 	// Producer initialization
 	producercfg := sarama.NewConfig()
 	producercfg.Producer.Return.Successes = true
