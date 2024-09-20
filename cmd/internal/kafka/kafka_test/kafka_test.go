@@ -35,7 +35,9 @@ func TestConsumerMessage(t *testing.T) {
 	mockPartitionConsumer := new(mocks.PartitionConsumerInterface)
 	// Setup mock behavior for messages channel
 	mockMessagesChannel := make(chan *sarama.ConsumerMessage)
+
 	close(mockMessagesChannel)
+
 	mockPartitionConsumer.On("Messages").Return((<-chan *sarama.ConsumerMessage)(mockMessagesChannel))
 	mockPartitionConsumer.On("Close").Return(nil)
 	// Mock the behavior of ConsumePartition
