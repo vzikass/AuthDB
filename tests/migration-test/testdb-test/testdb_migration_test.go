@@ -1,11 +1,10 @@
 // verification of correct connection and execution of migrations
-package testdbtest
+package tests
 
 import (
 	"database/sql"
 	"log"
 	"os"
-	"path/filepath"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -23,26 +22,19 @@ func TestMain(m *testing.M) {
 	}
 	defer testDB.Close()
 
-	currentDir, err := os.Getwd()
-	if err != nil{
-		log.Fatalf("Failed to get current directory: %v", err)
-	}
-	migrationDir := filepath.Join(currentDir, "./migrations")
-
-	
-	// up migrations 
-	err = goose.Up(testDB, migrationDir)
-	if err != nil{
+	// up migrations
+	err = goose.Up(testDB, "/migrations")
+	if err != nil {
 		log.Fatalf("Failed to apply migrations: %v", err)
 	}
 
 	code := m.Run()
-	
-	// down migrations 
-	err = goose.Down(testDB, migrationDir)
-	if err != nil{
+
+	// down migrations
+	err = goose.Down(testDB, "/migrations")
+	if err != nil {
 		log.Fatalf("Failed to rollback migrations: %v", err)
 	}
-	
+
 	os.Exit(code)
 }
