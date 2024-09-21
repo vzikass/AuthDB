@@ -36,6 +36,7 @@ _also if you go to http://localhost:4444/users you can see your account and othe
 + Markdown
 + Testing (with database for tests)
 + Kafka (simple configuration)
++ Mocks ([sarama](https://github.com/IBM/sarama))
   
 And other things I've encountered in the writing process.
 
