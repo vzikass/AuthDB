@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 	defer mainDB.Close()
 
 	// up migrations
-	err = goose.Up(mainDB, "/migrations")
+	err = goose.Up(mainDB, "./migrations")
 	if err != nil{
 		log.Fatalf("Failed to apply migrations: %v", err)
 	}
@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// down migrations
-	err = goose.Down(mainDB, "/migrations")
+	err = goose.Down(mainDB, "./migrations")
 	if err != nil{
 		log.Fatalf("Failed to rollback migrations: %v", err)
 	}
