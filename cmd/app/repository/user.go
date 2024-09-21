@@ -76,7 +76,7 @@ func (u *User) Add(ctx context.Context, tx pgx.Tx) (err error) {
 	}
 }
 
-func (u *User) Delete(ctx context.Context, tx pgx.Tx, userID int) (err error) {
+func (u *User) DeleteByID(ctx context.Context, tx pgx.Tx, userID int) (err error) {
 	query := `delete from users where id = $1`
 	if tx != nil {
 		_, err = tx.Exec(ctx, query, userID)
@@ -89,7 +89,7 @@ func (u *User) Delete(ctx context.Context, tx pgx.Tx, userID int) (err error) {
 	return nil
 }
 
-func (u *User) Update(ctx context.Context, tx pgx.Tx) (err error) {
+func (u *User) UpdateByID(ctx context.Context, tx pgx.Tx) (err error) {
 	query := `update users set login = $1, email = $2, password = $3 where id = $4`
 	if tx != nil {
 		_, err = tx.Exec(ctx, query, u.Login, u.Email, u.Password, u.ID)

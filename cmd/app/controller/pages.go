@@ -46,7 +46,7 @@ func (a *App) LoginPage(w http.ResponseWriter, message string) {
 	}
 }
 
-func (a *App) renderDeleteConfirmationPage(w http.ResponseWriter) {
+func (a *App) RenderDeleteConfirmationPage(w http.ResponseWriter) {
 	path := filepath.Join("public", "html", "delete.html")
 	tmpl, err := template.ParseFiles(path)
 	if err != nil {

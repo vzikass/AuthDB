@@ -1,5 +1,5 @@
 // verification of correct connection and execution of migrations
-package tests
+package testdbtest
 
 import (
 	"database/sql"
@@ -28,6 +28,7 @@ func TestMain(m *testing.M) {
 	}
 
 	code := m.Run()
+	
 	// down migrations 
 	err = goose.Down(testDB, "/migrations")
 	if err != nil{

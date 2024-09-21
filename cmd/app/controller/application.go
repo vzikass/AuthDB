@@ -3,19 +3,18 @@
 package controller
 
 import (
-	"AuthDB/cmd/internal/kafka"
+	"AuthDB/cmd/app/controller/helper"
 	"AuthDB/cmd/app/repository"
+	"AuthDB/cmd/internal/kafka"
 	"AuthDB/utils"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
-	"unicode"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/julienschmidt/httprouter"
@@ -48,7 +47,7 @@ func (a *App) Routes(r *httprouter.Router) {
 	})
 	r.POST("/delete", a.authorized(a.DeleteAccount))
 	r.GET("/delete", a.authorized(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		a.renderDeleteConfirmationPage(w)
+		a.RenderDeleteConfirmationPage(w)
 	}))
 	r.POST("/update", a.authorized(a.UpdateData))
 	r.GET("/update", a.authorized(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -102,9 +101,9 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	} else {
 		livingTime = 1 * time.Hour
 	}
-	// remember livingTime 
+	// remember livingTime
 	expiration := time.Now().Add(livingTime)
-	// Create cookie 
+	// Create cookie
 	cookie := http.Cookie{
 		Name:     "token",
 		Value:    url.QueryEscape(token),
@@ -130,34 +129,6 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func IsNumeric(s string) bool {
-	// numbers from 0 to 9 matches the previous token between one and unlimited times
-	re := regexp.MustCompile(`^\d+$`)
-	return re.MatchString(s)
-}
-
-// Checking the password for valid letters and digits
-func IsValidPassword(password string) bool {
-	var hasDigit, hasLetter bool
-	if len(password) < 4 {
-		return false
-	}
-
-	for _, char := range password {
-		switch {
-		case unicode.IsLetter(char):
-			hasLetter = true
-		case unicode.IsDigit(char):
-			hasDigit = true
-		}
-		if hasDigit && hasLetter {
-			return true
-		}
-	}
-	
-	return hasDigit && hasLetter
-}
-
 func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	user := repository.User{}
 	login := strings.TrimSpace(r.FormValue("login"))
@@ -175,7 +146,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		return
 	}
 
-	if !IsValidPassword(password) {
+	if !helper.IsValidPassword(password) {
 		a.SignupPage(w, "The password should not contain only numbers or letters")
 		return
 	}
@@ -264,13 +235,14 @@ func ReadCookie(name string, r *http.Request) (value string, err error) {
 	}
 	// cookie string
 	str := cookie.Value
-	// decode the string 
+	// decode the string
 	value, err = url.QueryUnescape(str)
 	if err != nil {
 		return value, err
 	}
 	return value, err
 }
+
 // check user authorization
 func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -281,13 +253,13 @@ func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
-		// read token 
+		// read token
 		// lock access to the cache while we work with it
 		a.cacheMu.Lock()
 		_, ok := a.cache[token]
 		a.cacheMu.Unlock()
 		// if ok == false (token not found)
-		// redirect to login 
+		// redirect to login
 		if !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
@@ -341,7 +313,7 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 		"timestamp": "%s",
 		}`, user.ID, time.Now().UTC().Format(time.RFC3339))),
 	}
-	
+
 	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
@@ -351,7 +323,7 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 
 // The following 3 functions are the same
 // only they update different data and queries to the database
-// also kafka messages are created 
+// also kafka messages are created
 func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) error {
 	user, err := a.repo.FindUserByLogin(a.ctx, oldLogin)
 	if err != nil {
@@ -378,7 +350,7 @@ func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) e
 			"timestamp": "%s"
 		}`, user.ID, newLogin, time.Now().UTC().Format(time.RFC3339))),
 	}
-	
+
 	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
@@ -415,7 +387,7 @@ func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) erro
 			"timestamp": "%s"
 		}`, user.ID, newEmail, time.Now().UTC().Format(time.RFC3339))),
 	}
-	
+
 	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
@@ -452,7 +424,7 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 	a.UpdateUserPage(w, "Passwords need to be different")
-	user.Password = hashedNewPassword	
+	user.Password = hashedNewPassword
 	// create kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
@@ -462,7 +434,7 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 			"timestamp": "%s"
 		}`, user.ID, newPassword, time.Now().UTC().Format(time.RFC3339))),
 	}
-	
+
 	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		log.Println("Failed to produce Kafka message:", err)
@@ -470,10 +442,9 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 	return err
 }
 
-// 
 func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	user := repository.User{}
-	// read lines 
+	// read lines
 	oldUsername := r.FormValue("oldLogin")
 	newUsername := r.FormValue("newLogin")
 	oldEmail := r.FormValue("oldEmail")
@@ -517,7 +488,7 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 			"timestamp": "%s"
 		}`, user.ID, oldUsername, newUsername, newPassword, oldEmail, newEmail, time.Now().UTC().Format(time.RFC3339))),
 	}
-	
+
 	// The producer writes the Kafka message to the Kafka cluster
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		fmt.Println("Failed to produce Kafka message:", err)

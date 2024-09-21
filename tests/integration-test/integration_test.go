@@ -3,7 +3,7 @@
 package integrationtest
 
 import (
-	"AuthDB/cmd/app/controller"
+	"AuthDB/cmd/app/controller/helper"
 	"AuthDB/cmd/app/repository"
 	"AuthDB/tests/helpers"
 	"AuthDB/utils"
@@ -162,7 +162,7 @@ func TestUpdateUser(t *testing.T) {
 		user.Login = "updateduser"
 		user.Password = "newpassword123"
 		user.Email = "updated@example.com"
-		if err := user.Update(ctx, tx); err != nil {
+		if err := user.UpdateByID(ctx, tx); err != nil {
 			t.Fatalf("Failed to update user: %v", err)
 		}
 
@@ -197,7 +197,7 @@ func TestDeleteUser(t *testing.T) {
 			t.Fatalf("Failed to add user for testing: %v", err)
 		}
 
-		if err := user.Delete(ctx, tx, user.ID); err != nil {
+		if err := user.DeleteByID(ctx, tx, user.ID); err != nil {
 			t.Fatalf("Failed to delete user: %v", err)
 		}
 
@@ -303,7 +303,7 @@ func TestIsValidPassword(t *testing.T) {
 			t.Fatalf("Failed to add user: %v", err)
 		}
 
-		if !controller.IsValidPassword(user.Password) {
+		if !helper.IsValidPassword(user.Password) {
 			t.Errorf("Password is not valid")
 		}
 		return nil
