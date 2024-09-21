@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"testing"
-
+	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 )
 
