@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"path/filepath"
 	"testing"
+
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 )
@@ -20,9 +22,16 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to connect to test database: %v", err)
 	}
 	defer testDB.Close()
+
+	currentDir, err := os.Getwd()
+	if err != nil{
+		log.Fatalf("Failed to get current directory: %v", err)
+	}
+	migrationDir := filepath.Join(currentDir, "./migrations")
+
 	
 	// up migrations 
-	err = goose.Up(testDB, "./migrations")
+	err = goose.Up(testDB, migrationDir)
 	if err != nil{
 		log.Fatalf("Failed to apply migrations: %v", err)
 	}
@@ -30,7 +39,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 	
 	// down migrations 
-	err = goose.Down(testDB, "./migrations")
+	err = goose.Down(testDB, migrationDir)
 	if err != nil{
 		log.Fatalf("Failed to rollback migrations: %v", err)
 	}
