@@ -2,6 +2,54 @@ version: '3.8'
 
 services:
 
+  maindb:
+    image: postgres:latest
+    container_name: maindb
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: md5
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 193566
+      POSTGRES_DB: AuthDB
+    volumes:
+      - ./migrations/20240807182800_createmaindb.sql:/docker-entrypoint-initdb.d/20240807182800_createmaindb.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+    restart: unless-stopped
+    env_file:
+      - ./configs/db.env
+    networks:
+      - mynetwork
+      
+  testdb:
+    image: postgres:latest
+    container_name: testdb
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: md5
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 193566
+      POSTGRES_DB: testdb
+    volumes:
+      - ./migrations/20240807194809_createtestdb.sql:/docker-entrypoint-initdb.d/20240807194809_createtestdb.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 6
+      start_period: 30s
+      timeout: 5s
+    restart: unless-stopped
+    networks:
+      - mynetwork
+
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
@@ -81,31 +129,6 @@ services:
     networks:
       - mynetwork
 
-  maindb:
-    image: postgres:latest
-    container_name: maindb
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_HOST_AUTH_METHOD: md5
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 193566
-      POSTGRES_DB: AuthDB
-    volumes:
-      - ./migrations/20240807182800_createmaindb.sql:/docker-entrypoint-initdb.d/20240807182800_createmaindb.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      retries: 5
-      start_period: 30s
-      timeout: 5s
-    restart: unless-stopped
-    env_file:
-      - ./configs/db.env
-    networks:
-      - mynetwork
-
   web:
     image: myapp
     container_name: web
@@ -144,29 +167,6 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - web
-    networks:
-      - mynetwork
-
-  testdb:
-    image: postgres:latest
-    container_name: testdb
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_HOST_AUTH_METHOD: md5
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 193566
-      POSTGRES_DB: testdb
-    volumes:
-      - ./migrations/20240807194809_createtestdb.sql:/docker-entrypoint-initdb.d/20240807194809_createtestdb.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      retries: 6
-      start_period: 30s
-      timeout: 5s
-    restart: unless-stopped
     networks:
       - mynetwork
       

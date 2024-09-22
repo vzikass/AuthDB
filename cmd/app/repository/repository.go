@@ -17,13 +17,13 @@ type Repository struct {
 func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
-func (r *Repository) Login(ctx context.Context, tx pgx.Tx, login string) (u User, err error) {
-	query := `select id, login, password, email from users where login = $1`
+func (r *Repository) Login(ctx context.Context, tx pgx.Tx, username string) (u User, err error) {
+	query := `select id, username, password, email from users where username = $1`
 
 	if tx != nil {
-		err = tx.QueryRow(ctx, query, login).Scan(&u.ID, &u.Login, &u.Password, &u.Email)
+		err = tx.QueryRow(ctx, query, username).Scan(&u.ID, &u.Username, &u.Password, &u.Email)
 	} else {
-		err = r.pool.QueryRow(ctx, query, login).Scan(&u.ID, &u.Login, &u.Password, &u.Email)
+		err = r.pool.QueryRow(ctx, query, username).Scan(&u.ID, &u.Username, &u.Password, &u.Email)
 	}
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -35,16 +35,16 @@ func (r *Repository) Login(ctx context.Context, tx pgx.Tx, login string) (u User
 }
 
 // Checking if such a user already exists.
-// If user already exists with the same login and email,
+// If user already exists with the same username and email,
 // then count will be > 0
-func (r *Repository) UserExist(ctx context.Context, tx pgx.Tx, login, email string) (exist bool, err error) {
+func (r *Repository) UserExist(ctx context.Context, tx pgx.Tx, username, email string) (exist bool, err error) {
 	var count int
-	query := `select count(*) from users where login = $1 or email = $2`
+	query := `select count(*) from users where username = $1 or email = $2`
 
 	if tx != nil {
-		err = tx.QueryRow(ctx, query, login, email).Scan(&count)
+		err = tx.QueryRow(ctx, query, username, email).Scan(&count)
 	} else {
-		err = r.pool.QueryRow(ctx, query, login, email).Scan(&count)
+		err = r.pool.QueryRow(ctx, query, username, email).Scan(&count)
 	}
 	if err != nil {
 		return false, err
@@ -56,9 +56,9 @@ func (r *Repository) GetByID(ctx context.Context, tx pgx.Tx, id int) (user User,
 	query := `select * from users where id = $1`
 
 	if tx != nil {
-		err = tx.QueryRow(ctx, query, id).Scan(&user.ID, &user.Login, &user.Email, &user.Password)
+		err = tx.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	} else {
-		err = r.pool.QueryRow(ctx, query, id).Scan(&user.ID, &user.Login, &user.Email, &user.Password)
+		err = r.pool.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	}
 	if err != nil {
 		return user, err
@@ -79,9 +79,9 @@ func (r *Repository) UpdateData(ctx context.Context, query, new, old string) err
 }
 
 func (r *Repository) FindUserByEmail(ctx context.Context, email string) (u User, err error) {
-	row := r.pool.QueryRow(ctx, `select id, login, email, password from users where email = $1`,
+	row := r.pool.QueryRow(ctx, `select id, username, email, password from users where email = $1`,
 		email)
-	err = row.Scan(&u.ID, &u.Login, &u.Email, &u.Password)
+	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password)
 	if err != nil {
 		return u, fmt.Errorf("failed to query data: %v", err)
 	}
@@ -89,19 +89,19 @@ func (r *Repository) FindUserByEmail(ctx context.Context, email string) (u User,
 }
 
 func (r *Repository) FindUserByPassword(ctx context.Context, password string) (u User, err error) {
-	row := r.pool.QueryRow(ctx, `select id, login, email, password from users where password = $1`,
+	row := r.pool.QueryRow(ctx, `select id, username, email, password from users where password = $1`,
 		password)
-	err = row.Scan(&u.ID, &u.Login, &u.Email, &u.Password)
+	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password)
 	if err != nil {
 		return u, fmt.Errorf("failed to query data: %v", err)
 	}
 	return u, nil
 }
 
-func (r *Repository) FindUserByLogin(ctx context.Context, login string) (u User, err error) {
-	row := r.pool.QueryRow(ctx, `select id, login, email, password from users where login = $1`,
-		login)
-	err = row.Scan(&u.ID, &u.Login, &u.Email, &u.Password)
+func (r *Repository) FindUserByLogin(ctx context.Context, username string) (u User, err error) {
+	row := r.pool.QueryRow(ctx, `select id, username, email, password from users where username = $1`,
+		username)
+	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password)
 	if err != nil {
 		return u, fmt.Errorf("failed to query data: %v", err)
 	}

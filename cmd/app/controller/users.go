@@ -71,7 +71,7 @@ func DeleteUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	if err != nil{
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	err = user.Delete(ctx, nil, userID)
+	err = user.DeleteByID(ctx, nil, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

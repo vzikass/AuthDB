@@ -3,6 +3,7 @@ package main
 import (
 	"AuthDB/cmd/app/controller"
 	"AuthDB/cmd/app/repository"
+	"AuthDB/cmd/internal/config"
 	"AuthDB/cmd/internal/kafka"
 	"context"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -20,8 +20,8 @@ func main() {
 	defer cancel()
 
 	// Load from .env file
-	if err := godotenv.Load("/app/configs/db.env"); err != nil {
-		log.Fatalf("Failed to load db.env: %v", err)
+	if err := config.Load("/app/configs/db.env"); err != nil {
+		log.Fatalf("Failed to load .env file: %v", err)
 	}
 
 	// Connect db
@@ -52,7 +52,7 @@ func main() {
 			log.Fatalf("Main server failed: %v", err)
 		}
 	}()
-
+	// Graceful shutdown
 	// we need to reserve to buffer size 1, so the notifier are not blocked
 	exit := make(chan os.Signal, 1)
 	// The operating system sends a shutdown signal to a process when it wants to terminate it gracefully

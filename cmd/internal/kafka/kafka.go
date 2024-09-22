@@ -32,6 +32,7 @@ type PartitionConsumerInterface interface {
     Lag() int64
 }
 
+// kafka config values
 var (
 	Producer ProducerInterface
 	Consumer ConsumerInterface
