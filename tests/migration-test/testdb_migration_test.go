@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Failed to get current directory: %v", err)
 	}
-	migrationDir := filepath.Join("/migrations")
+	migrationDir := filepath.Join("../migrations")
 
 	log.Printf("Current directory: %v", currentDir)
 	log.Printf("Migration directory: %v", migrationDir)

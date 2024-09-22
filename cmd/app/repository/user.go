@@ -56,7 +56,7 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 
 	for rows.Next() {
 		var user User
-		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password); err != nil {
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt); err != nil {
 			return nil, err
 		}
 		users = append(users, user)
@@ -65,18 +65,20 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 }
 
 func GetUserById(ctx context.Context, userID string) (u User, err error) {
-	query := `select id, username, email, password from users where id = $1`
+	query := `select id, username, email, password, created_at from users where id = $1`
 	row := Dbpool.QueryRow(ctx, query, userID)
-	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password)
+	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password, &u.CreatedAt)
 	return
 }
 
 func (u *User) Add(ctx context.Context, tx pgx.Tx) (err error) {
 	if tx != nil {
-		_, err := tx.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", u.Username, u.Email, u.Password)
+		_, err := tx.Exec(ctx, "INSERT INTO users (username, email, password, created_at) VALUES ($1, $2, $3, $4)",
+		 u.Username, u.Email, u.Password, u.CreatedAt)
 		return err
 	} else {
-		_, err := Dbpool.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", u.Username, u.Email, u.Password)
+		_, err := Dbpool.Exec(ctx, "INSERT INTO users (username, email, password, created_at) VALUES ($1, $2, $3, $4)",
+		 u.Username, u.Email, u.Password, u.CreatedAt)
 		return err
 	}
 }
@@ -95,11 +97,11 @@ func (u *User) DeleteByID(ctx context.Context, tx pgx.Tx, userID int) (err error
 }
 
 func (u *User) UpdateByID(ctx context.Context, tx pgx.Tx) (err error) {
-	query := `update users set username = $1, email = $2, password = $3 where id = $4`
+	query := `update users set username = $1, email = $2, password = $3, created_at = $4 where id = $4`
 	if tx != nil {
-		_, err = tx.Exec(ctx, query, u.Username, u.Email, u.Password, u.ID)
+		_, err = tx.Exec(ctx, query, u.Username, u.Email, u.Password, u.CreatedAt, u.ID)
 	} else {
-		_, err = Dbpool.Exec(ctx, query, u.Username, u.Email, u.Password, u.ID)
+		_, err = Dbpool.Exec(ctx, query, u.Username, u.Email, u.Password, u.CreatedAt, u.ID)
 	}
 	if err != nil {
 		return err

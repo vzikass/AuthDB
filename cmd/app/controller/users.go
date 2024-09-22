@@ -34,15 +34,15 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
 func AddUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	ctx := context.Background()
-	login := r.FormValue("login")
+	username := r.FormValue("username")
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	if login == "" || email == "" || password == "" {
+	if username == "" || email == "" || password == "" {
 		http.Error(w, "Not all fields are filled in", http.StatusBadRequest)
 		return
 	}
-	user, err := repository.NewUser(login, email, password)
+	user, err := repository.NewUser(username, email, password)
 	if err != nil{
 		http.Error(w, "Error creating user", http.StatusInternalServerError)
 		return
