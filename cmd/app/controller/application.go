@@ -59,15 +59,15 @@ func (a *App) Routes(r *httprouter.Router) {
 }
 
 func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	login := r.FormValue("login")
+	username := r.FormValue("username")
 	password := r.FormValue("password")
 
-	if login == "" || password == "" {
-		a.LoginPage(w, "You must provide a login and password")
+	if username == "" || password == "" {
+		a.LoginPage(w, "You must provide a username and password")
 		return
 	}
 
-	user, err := a.repo.Login(a.ctx, nil, login)
+	user, err := a.repo.Login(a.ctx, nil, username)
 	if err != nil {
 		a.LoginPage(w, "User not found")
 		return
@@ -79,8 +79,8 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		return
 	}
 
-	// Generate JWT-token with user login
-	token, err := utils.GenerateJWT(user.Login)
+	// Generate JWT-token with user username
+	token, err := utils.GenerateJWT(user.Username)
 	if err != nil {
 		log.Fatalf("Error generate token: %v", err)
 		return
@@ -131,12 +131,12 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 
 func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	user := repository.User{}
-	login := strings.TrimSpace(r.FormValue("login"))
+	username := strings.TrimSpace(r.FormValue("username"))
 	email := strings.TrimSpace(r.FormValue("email"))
 	password := strings.TrimSpace(r.FormValue("password"))
 	repassword := strings.TrimSpace(r.FormValue("repassword"))
 
-	if login == "" || email == "" || password == "" || repassword == "" {
+	if username == "" || email == "" || password == "" || repassword == "" {
 		a.SignupPage(w, "Not all fields are filled in")
 		return
 	}
@@ -151,12 +151,12 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 		return
 	}
 
-	if len(login) <= 4 {
-		a.SignupPage(w, "Minimum login length - 4 characters")
+	if len(username) <= 4 {
+		a.SignupPage(w, "Minimum username length - 4 characters")
 		return
 	}
 
-	userExist, err := a.repo.UserExist(a.ctx, nil, login, email)
+	userExist, err := a.repo.UserExist(a.ctx, nil, username, email)
 	if err != nil {
 		a.SignupPage(w, "Error checking existing user")
 		return
@@ -172,7 +172,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 	errCh := make(chan error)
 	go func() {
 		defer close(errCh)
-		user, err := repository.NewUser(login, email, password)
+		user, err := repository.NewUser(username, email, password)
 		if err != nil {
 			errCh <- err
 			return
@@ -324,17 +324,17 @@ func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter
 // The following 3 functions are the same
 // only they update different data and queries to the database
 // also kafka messages are created
-func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) error {
-	user, err := a.repo.FindUserByLogin(a.ctx, oldLogin)
+func (a *App) UpdateUsername(w http.ResponseWriter, oldusername, newusername string) error {
+	user, err := a.repo.FindUserByLogin(a.ctx, oldusername)
 	if err != nil {
 		a.UpdateUserPage(w, "User not found")
 		return err
 	}
-	// old and new login must not be the same
-	if user.Login != newLogin {
-		// set a new login if they do not match
-		query := `UPDATE users SET login = $1 WHERE login = $2`
-		err = a.repo.UpdateData(a.ctx, query, newLogin, oldLogin)
+	// old and new username must not be the same
+	if user.Username != newusername {
+		// set a new username if they do not match
+		query := `UPDATE users SET username = $1 WHERE username = $2`
+		err = a.repo.UpdateData(a.ctx, query, newusername, oldusername)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return err
@@ -348,7 +348,7 @@ func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) e
 			"user_id": "%d",
 			"newusername": "%s",
 			"timestamp": "%s"
-		}`, user.ID, newLogin, time.Now().UTC().Format(time.RFC3339))),
+		}`, user.ID, newusername, time.Now().UTC().Format(time.RFC3339))),
 	}
 
 	// The producer writes the Kafka message to the Kafka cluster
@@ -356,8 +356,8 @@ func (a *App) UpdateUsername(w http.ResponseWriter, oldLogin, newLogin string) e
 		log.Println("Failed to produce Kafka message:", err)
 	}
 
-	a.UpdateUserPage(w, "This login already exists")
-	return fmt.Errorf("login already exists")
+	a.UpdateUserPage(w, "This username already exists")
+	return fmt.Errorf("username already exists")
 }
 
 func (a *App) UpdateEmail(w http.ResponseWriter, oldEmail, newEmail string) error {
@@ -445,8 +445,8 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	user := repository.User{}
 	// read lines
-	oldUsername := r.FormValue("oldLogin")
-	newUsername := r.FormValue("newLogin")
+	oldUsername := r.FormValue("oldUsername")
+	newUsername := r.FormValue("newUsername")
 	oldEmail := r.FormValue("oldEmail")
 	newEmail := r.FormValue("newEmail")
 	newPassword := r.FormValue("newPassword")
@@ -480,8 +480,8 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 		Value: []byte(fmt.Sprintf(`{
 			"event": "update_data",
 			"user_id": "%d",
-			"old_login": "%s",
-			"new_login": "%s",
+			"old_username": "%s",
+			"new_username": "%s",
 			"new_password": "%s"
 			"old_email": "%s",
 			"new_email": "%s",

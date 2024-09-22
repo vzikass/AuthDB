@@ -3,6 +3,7 @@ package main
 import (
 	"AuthDB/cmd/app/controller"
 	"AuthDB/cmd/app/repository"
+	"AuthDB/cmd/internal/config"
 	"AuthDB/cmd/internal/kafka"
 	"context"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -20,8 +20,8 @@ func main() {
 	defer cancel()
 
 	// Load from .env file
-	if err := godotenv.Load("/app/configs/db.env"); err != nil {
-		log.Fatalf("Failed to load db.env: %v", err)
+	if err := config.Load("../configs"); err != nil {
+		log.Fatalf("Failed to load .env file: %v", err)
 	}
 
 	// Connect db

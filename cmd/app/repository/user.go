@@ -10,7 +10,7 @@ import (
 
 type User struct {
 	ID       int    `json:"id" db:"id"`
-	Login    string `json:"login" db:"login"`
+	Username    string `json:"username" db:"username"`
 	Password string `json:"password" db:"password"`
 	Email    string `json:"email" db:"email"`
 }
@@ -20,14 +20,14 @@ var (
 )
 // Creating new user.
 // User struct receives hashed password
-func NewUser(login, email, password string) (*User, error) {
+func NewUser(username, email, password string) (*User, error) {
 	hashedPassword, err := utils.GenerateHash(password)
 	if err != nil {
 		return nil, fmt.Errorf("error hashing password: %v", err)
 	}
 	HashPassword = hashedPassword
 	user := &User{
-		Login:    login,
+		Username:    username,
 		Email:    email,
 		Password: hashedPassword,
 	}
@@ -51,7 +51,7 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 
 	for rows.Next() {
 		var user User
-		if err := rows.Scan(&user.ID, &user.Login, &user.Email, &user.Password); err != nil {
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password); err != nil {
 			return nil, err
 		}
 		users = append(users, user)
@@ -60,18 +60,18 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 }
 
 func GetUserById(ctx context.Context, userID string) (u User, err error) {
-	query := `select id, login, email, password from users where id = $1`
+	query := `select id, username, email, password from users where id = $1`
 	row := Dbpool.QueryRow(ctx, query, userID)
-	err = row.Scan(&u.ID, &u.Login, &u.Email, &u.Password)
+	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password)
 	return
 }
 
 func (u *User) Add(ctx context.Context, tx pgx.Tx) (err error) {
 	if tx != nil {
-		_, err := tx.Exec(ctx, "INSERT INTO users (login, email, password) VALUES ($1, $2, $3)", u.Login, u.Email, u.Password)
+		_, err := tx.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", u.Username, u.Email, u.Password)
 		return err
 	} else {
-		_, err := Dbpool.Exec(ctx, "INSERT INTO users (login, email, password) VALUES ($1, $2, $3)", u.Login, u.Email, u.Password)
+		_, err := Dbpool.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", u.Username, u.Email, u.Password)
 		return err
 	}
 }
@@ -90,11 +90,11 @@ func (u *User) DeleteByID(ctx context.Context, tx pgx.Tx, userID int) (err error
 }
 
 func (u *User) UpdateByID(ctx context.Context, tx pgx.Tx) (err error) {
-	query := `update users set login = $1, email = $2, password = $3 where id = $4`
+	query := `update users set username = $1, email = $2, password = $3 where id = $4`
 	if tx != nil {
-		_, err = tx.Exec(ctx, query, u.Login, u.Email, u.Password, u.ID)
+		_, err = tx.Exec(ctx, query, u.Username, u.Email, u.Password, u.ID)
 	} else {
-		_, err = Dbpool.Exec(ctx, query, u.Login, u.Email, u.Password, u.ID)
+		_, err = Dbpool.Exec(ctx, query, u.Username, u.Email, u.Password, u.ID)
 	}
 	if err != nil {
 		return err

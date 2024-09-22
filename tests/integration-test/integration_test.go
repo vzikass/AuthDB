@@ -55,7 +55,7 @@ func TestNewUser(t *testing.T) {
 			return fmt.Errorf("failed to add user: %v", err)
 		}
 
-		if user.Login != login || user.Email != email {
+		if user.Username != login || user.Email != email {
 			t.Errorf("User data is incorrect")
 		}
 		if !utils.CompareHashPassword(password, user.Password) {
@@ -69,7 +69,7 @@ func TestGetAllUsers(t *testing.T) {
 	helpers.RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
 		user := &repository.User{
-			Login:    "testuser",
+			Username:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -95,7 +95,7 @@ func TestGetUserByID(t *testing.T) {
 		repo := &repository.Repository{}
 		user := &repository.User{
 			ID:       1,
-			Login:    "testuser",
+			Username:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -121,7 +121,7 @@ func TestAddUser(t *testing.T) {
 		ctx := context.Background()
 		repo := &repository.Repository{}
 		user := &repository.User{
-			Login:    "testuser",
+			Username:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -130,7 +130,7 @@ func TestAddUser(t *testing.T) {
 			t.Fatalf("Failed to add user: %v", err)
 		}
 
-		exist, err := repo.UserExist(ctx, tx, user.Login, user.Email)
+		exist, err := repo.UserExist(ctx, tx, user.Username, user.Email)
 		if err != nil {
 			t.Errorf("User not found")
 		}
@@ -150,7 +150,7 @@ func TestUpdateUser(t *testing.T) {
 		repo := &repository.Repository{}
 		user := &repository.User{
 			ID:       1,
-			Login:    "testuser",
+			Username:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -159,7 +159,7 @@ func TestUpdateUser(t *testing.T) {
 			t.Fatalf("Failed to add user: %v", err)
 		}
 
-		user.Login = "updateduser"
+		user.Username = "updateduser"
 		user.Password = "newpassword123"
 		user.Email = "updated@example.com"
 		if err := user.UpdateByID(ctx, tx); err != nil {
@@ -170,7 +170,7 @@ func TestUpdateUser(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get updated user: %v", err)
 		}
-		if updatedUser.Login != "updateduser" || updatedUser.Email != "updated@example.com" {
+		if updatedUser.Username != "updateduser" || updatedUser.Email != "updated@example.com" {
 			t.Errorf("User data was not updated correctly. Got %+v", updatedUser)
 		}
 		if utils.CompareHashPassword("newpassword123", updatedUser.Password) {
@@ -188,7 +188,7 @@ func TestDeleteUser(t *testing.T) {
 		repo := &repository.Repository{}
 		user := &repository.User{
 			ID:       1,
-			Login:    "testuser",
+			Username:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -220,7 +220,7 @@ func TestLogin(t *testing.T) {
 		repo := &repository.Repository{}
 		login := "testuser"
 		user := &repository.User{
-			Login:    "testuser",
+			Username:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -229,13 +229,13 @@ func TestLogin(t *testing.T) {
 			t.Fatalf("Failed to add user: %v", err)
 		}
 
-		u, err := repo.Login(ctx, tx, user.Login)
+		u, err := repo.Login(ctx, tx, user.Username)
 		if err != nil {
 			t.Fatalf("Failed to login: %v", err)
 		}
 
-		if u.Login != login {
-			t.Errorf("Expected login %s, got %s", login, user.Login)
+		if u.Username != login {
+			t.Errorf("Expected login %s, got %s", login, user.Username)
 		}
 		return err
 	})
@@ -246,7 +246,7 @@ func TestUserExist(t *testing.T) {
 		ctx := context.Background()
 		repo := &repository.Repository{}
 		user := &repository.User{
-			Login:    "testuser",
+			Username:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -255,7 +255,7 @@ func TestUserExist(t *testing.T) {
 			t.Fatalf("Failed to add user: %v", err)
 		}
 
-		exist, err := repo.UserExist(ctx, tx, user.Login, user.Email)
+		exist, err := repo.UserExist(ctx, tx, user.Username, user.Email)
 		if err != nil {
 			t.Fatalf("Failed to check exist user: %v", err)
 		}
@@ -294,7 +294,7 @@ func TestIsValidPassword(t *testing.T) {
 	helpers.RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
 		user := &repository.User{
-			Login:    "testuser",
+			Username:    "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
