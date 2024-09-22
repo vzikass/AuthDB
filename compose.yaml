@@ -136,8 +136,8 @@ services:
     ports:
       - "4444:4444"
     environment:
-      DATABASE_URL: postgres://postgres:193566@maindb:5432/AuthDB
-      TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb
+      DATABASE_URL: postgres://vyacheslavivkin:193566@maindb:5432/AuthDB
+      TESTDB_URL: postgres://vyacheslavivkin:193566@testdb:5432/testdb
       KAFKA_BROKERS: kafka-1:9092,kafka-2:9093
     depends_on:
       maindb: 

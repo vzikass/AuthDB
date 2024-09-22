@@ -4,6 +4,7 @@ import (
 	"AuthDB/utils"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v4"
 )
@@ -13,6 +14,7 @@ type User struct {
 	Username string `json:"username" db:"username"`
 	Password string `json:"password" db:"password"`
 	Email    string `json:"email" db:"email"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
 var (
@@ -26,11 +28,13 @@ func NewUser(username, email, password string) (*User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error hashing password: %v", err)
 	}
+	curTime := time.Now()
 	HashPassword = hashedPassword
 	user := &User{
 		Username: username,
 		Email:    email,
 		Password: hashedPassword,
+		CreatedAt: curTime,
 	}
 	return user, nil
 }
