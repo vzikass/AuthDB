@@ -42,10 +42,10 @@ func TestInitDBConn_InvalidURL(t *testing.T) {
 // User tests (using test db)
 func TestNewUser(t *testing.T) {
 	helpers.RunWithTransactions(t, func(tx pgx.Tx) error {
-		login := "testuser"
+		username := "testuser"
 		password := "qwerty123"
 		email := "testuser@example.com"
-		user, err := repository.NewUser(login, email, password)
+		user, err := repository.NewUser(username, email, password)
 		if err != nil {
 			return fmt.Errorf("failed to create user: %v", err)
 		}
@@ -55,7 +55,7 @@ func TestNewUser(t *testing.T) {
 			return fmt.Errorf("failed to add user: %v", err)
 		}
 
-		if user.Username != login || user.Email != email {
+		if user.Username != username || user.Email != email {
 			t.Errorf("User data is incorrect")
 		}
 		if !utils.CompareHashPassword(password, user.Password) {

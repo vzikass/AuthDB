@@ -10,7 +10,7 @@ import (
 
 type User struct {
 	ID       int    `json:"id" db:"id"`
-	Username    string `json:"username" db:"username"`
+	Username string `json:"username" db:"username"`
 	Password string `json:"password" db:"password"`
 	Email    string `json:"email" db:"email"`
 }
@@ -18,6 +18,7 @@ type User struct {
 var (
 	HashPassword string
 )
+
 // Creating new user.
 // User struct receives hashed password
 func NewUser(username, email, password string) (*User, error) {
@@ -27,7 +28,7 @@ func NewUser(username, email, password string) (*User, error) {
 	}
 	HashPassword = hashedPassword
 	user := &User{
-		Username:    username,
+		Username: username,
 		Email:    email,
 		Password: hashedPassword,
 	}
