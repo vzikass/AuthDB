@@ -20,7 +20,7 @@ func main() {
 	defer cancel()
 
 	// Load from .env file
-	if err := config.Load("../configs"); err != nil {
+	if err := config.Load("/app/configs/db.env"); err != nil {
 		log.Fatalf("Failed to load .env file: %v", err)
 	}
 

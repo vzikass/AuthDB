@@ -12,16 +12,15 @@ create table if not exists users (
     updated_at timestamptz
 );
 
-create index users_email_idx on users(lower(email));
-create index users_username_idx on users(lower(username));
+create index users_username_idx on users(LOWER(username));
+create index users_email_idx on users(LOWER(email));
 
 -- +goose Down
 -- +goose StatementBegin
 SELECT 'down SQL query';
 -- +goose StatementEnd
 
-drop index if exists users_email_idx;
 drop index if exists users_username_idx;
+drop index if exists users_email_idx;
 
 drop table if exists users;
-
