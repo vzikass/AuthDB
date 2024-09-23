@@ -17,7 +17,7 @@ var testDB *sql.DB
 func TestMain(m *testing.M) {
 	var err error
 
-	testDB, err = sql.Open("postgres", "user=postgres dbname=testdb sslmode=disable")
+	testDB, err = sql.Open("postgres", "user=postgres dbname=testdb sslmode=disable host=127.0.0.1")
 	if err != nil {
 		log.Fatalf("Failed to connect to test database: %v", err)
 	}
