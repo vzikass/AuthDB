@@ -14,7 +14,7 @@ import (
 
 var (
 	testDB *sql.DB
-	dsn = "postgres://postgres:193566@testdb:5432/testdb"
+	dsn = "postgres://postgres:193566@localhost:5432/testdb?sslmode=disable"
 )
 
 func TestMain(m *testing.M) {
@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Failed to get current directory: %v", err)
 	}
-	migrationDir := filepath.Join("/app/migrations")
+	migrationDir := filepath.Join("/Users/vyacheslavivkin/Desktop/dev/go/AuthDB/migrations")
 
 	log.Printf("Current directory: %v", currentDir)
 	log.Printf("Migration directory: %v", migrationDir)
