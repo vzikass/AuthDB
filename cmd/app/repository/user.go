@@ -67,7 +67,7 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 func GetUserById(ctx context.Context, userID string) (u User, err error) {
 	query := `select id, username, email, password from users where id = $1`
 	row := Dbpool.QueryRow(ctx, query, userID)
-	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password, &u.CreatedAt)
+	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password)
 	return
 }
 
@@ -99,9 +99,9 @@ func (u *User) DeleteByID(ctx context.Context, tx pgx.Tx, userID int) (err error
 func (u *User) UpdateByID(ctx context.Context, tx pgx.Tx) (err error) {
 	query := `update users set username = $1, email = $2, password = $3 where id = $4`
 	if tx != nil {
-		_, err = tx.Exec(ctx, query, u.Username, u.Email, u.Password, u.CreatedAt, u.ID)
+		_, err = tx.Exec(ctx, query, u.Username, u.Email, u.Password, u.ID)
 	} else {
-		_, err = Dbpool.Exec(ctx, query, u.Username, u.Email, u.Password, u.CreatedAt, u.ID)
+		_, err = Dbpool.Exec(ctx, query, u.Username, u.Email, u.Password, u.ID)
 	}
 	if err != nil {
 		return err
