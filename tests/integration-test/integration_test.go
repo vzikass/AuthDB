@@ -105,8 +105,11 @@ func TestGetUserByID(t *testing.T) {
 			t.Fatalf("Failed to add user for testing: %v", err)
 		}
 		t.Logf("User added with ID: %d", user.ID)
+
 		userID := user.ID
+
 		u, err := repo.GetByID(ctx, tx, userID)
+		
 		if err != nil {
 			log.Fatalf("Failed to get user by id: %v", err)
 		}

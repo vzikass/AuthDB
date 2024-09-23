@@ -74,11 +74,11 @@ func GetUserById(ctx context.Context, userID string) (u User, err error) {
 func (u *User) Add(ctx context.Context, tx pgx.Tx) (err error) {
 	if tx != nil {
 		_, err := tx.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
-		 u.Username, u.Email, u.Password, u.CreatedAt)
+		 u.Username, u.Email, u.Password)
 		return err
 	} else {
 		_, err := Dbpool.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
-		 u.Username, u.Email, u.Password, u.CreatedAt)
+		 u.Username, u.Email, u.Password)
 		return err
 	}
 }
