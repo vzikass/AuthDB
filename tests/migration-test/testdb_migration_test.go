@@ -12,12 +12,15 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-var testDB *sql.DB
+var (
+	testDB *sql.DB
+	dsn = "postgres://postgres:193566@testdb:5432/testdb"
+)
 
 func TestMain(m *testing.M) {
 	var err error
 
-	testDB, err = sql.Open("postgres", "user=postgres dbname=testdb sslmode=disable host=127.0.0.1")
+	testDB, err = sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("Failed to connect to test database: %v", err)
 	}
