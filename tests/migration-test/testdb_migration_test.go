@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Failed to get current directory: %v", err)
 	}
-	migrationDir := filepath.Join("/Users/vyacheslavivkin/Desktop/dev/go/AuthDB/migrations")
+	migrationDir := filepath.Join(currentDir, "../../migrations")
 
 	log.Printf("Current directory: %v", currentDir)
 	log.Printf("Migration directory: %v", migrationDir)
