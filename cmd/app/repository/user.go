@@ -56,7 +56,7 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 
 	for rows.Next() {
 		var user User
-		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password); err != nil {
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt); err != nil {
 			return nil, err
 		}
 		users = append(users, user)
@@ -67,18 +67,18 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 func GetUserById(ctx context.Context, userID string) (u User, err error) {
 	query := `select id, username, email, password from users where id = $1`
 	row := Dbpool.QueryRow(ctx, query, userID)
-	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password)
+	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password, &u.CreatedAt)
 	return
 }
 
 func (u *User) Add(ctx context.Context, tx pgx.Tx) (err error) {
 	if tx != nil {
 		_, err := tx.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
-		 u.Username, u.Email, u.Password)
+		 u.Username, u.Email, u.Password, u.CreatedAt)
 		return err
 	} else {
 		_, err := Dbpool.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
-		 u.Username, u.Email, u.Password)
+		 u.Username, u.Email, u.Password, u.CreatedAt)
 		return err
 	}
 }
