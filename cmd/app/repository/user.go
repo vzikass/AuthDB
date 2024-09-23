@@ -10,10 +10,10 @@ import (
 )
 
 type User struct {
-	ID       int    `json:"id" db:"id"`
-	Username string `json:"username" db:"username"`
-	Password string `json:"password" db:"password"`
-	Email    string `json:"email" db:"email"`
+	ID        int       `json:"id" db:"id"`
+	Username  string    `json:"username" db:"username"`
+	Password  string    `json:"password" db:"password"`
+	Email     string    `json:"email" db:"email"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
@@ -31,9 +31,9 @@ func NewUser(username, email, password string) (*User, error) {
 	curTime := time.Now()
 	HashPassword = hashedPassword
 	user := &User{
-		Username: username,
-		Email:    email,
-		Password: hashedPassword,
+		Username:  username,
+		Email:     email,
+		Password:  hashedPassword,
 		CreatedAt: curTime,
 	}
 	return user, nil
@@ -74,11 +74,11 @@ func GetUserById(ctx context.Context, userID string) (u User, err error) {
 func (u *User) Add(ctx context.Context, tx pgx.Tx) (err error) {
 	if tx != nil {
 		_, err := tx.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
-		 u.Username, u.Email, u.Password)
+			u.Username, u.Email, u.Password)
 		return err
 	} else {
 		_, err := Dbpool.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
-		 u.Username, u.Email, u.Password)
+			u.Username, u.Email, u.Password)
 		return err
 	}
 }

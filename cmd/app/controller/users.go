@@ -43,7 +43,7 @@ func AddUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		return
 	}
 	user, err := repository.NewUser(username, email, password)
-	if err != nil{
+	if err != nil {
 		http.Error(w, "Error creating user", http.StatusInternalServerError)
 		return
 	}
@@ -58,7 +58,6 @@ func AddUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 }
 
-
 func DeleteUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	userId := p.ByName("userID")
 	ctx := context.Background()
@@ -68,7 +67,7 @@ func DeleteUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		return
 	}
 	userID, err := strconv.Atoi(userId)
-	if err != nil{
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	err = user.DeleteByID(ctx, nil, userID)
@@ -82,4 +81,3 @@ func DeleteUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 		return
 	}
 }
-
