@@ -45,6 +45,7 @@ func TestNewUser(t *testing.T) {
 		username := "testuser"
 		password := "qwerty123"
 		email := "testuser@example.com"
+		
 		user, err := repository.NewUser(username, email, password)
 		if err != nil {
 			return fmt.Errorf("failed to create user: %v", err)
@@ -69,7 +70,7 @@ func TestGetAllUsers(t *testing.T) {
 	helpers.RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
 		user := &repository.User{
-			Username:    "testuser",
+			Username: "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -95,7 +96,7 @@ func TestGetUserByID(t *testing.T) {
 		repo := &repository.Repository{}
 		user := &repository.User{
 			ID:       1,
-			Username:    "testuser",
+			Username: "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -104,8 +105,11 @@ func TestGetUserByID(t *testing.T) {
 			t.Fatalf("Failed to add user for testing: %v", err)
 		}
 		t.Logf("User added with ID: %d", user.ID)
+
 		userID := user.ID
+
 		u, err := repo.GetByID(ctx, tx, userID)
+		
 		if err != nil {
 			log.Fatalf("Failed to get user by id: %v", err)
 		}
@@ -121,7 +125,7 @@ func TestAddUser(t *testing.T) {
 		ctx := context.Background()
 		repo := &repository.Repository{}
 		user := &repository.User{
-			Username:    "testuser",
+			Username: "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -150,7 +154,7 @@ func TestUpdateUser(t *testing.T) {
 		repo := &repository.Repository{}
 		user := &repository.User{
 			ID:       1,
-			Username:    "testuser",
+			Username: "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -188,7 +192,7 @@ func TestDeleteUser(t *testing.T) {
 		repo := &repository.Repository{}
 		user := &repository.User{
 			ID:       1,
-			Username:    "testuser",
+			Username: "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -220,7 +224,7 @@ func TestLogin(t *testing.T) {
 		repo := &repository.Repository{}
 		login := "testuser"
 		user := &repository.User{
-			Username:    "testuser",
+			Username: "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -246,7 +250,7 @@ func TestUserExist(t *testing.T) {
 		ctx := context.Background()
 		repo := &repository.Repository{}
 		user := &repository.User{
-			Username:    "testuser",
+			Username: "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}
@@ -294,7 +298,7 @@ func TestIsValidPassword(t *testing.T) {
 	helpers.RunWithTransactions(t, func(tx pgx.Tx) error {
 		ctx := context.Background()
 		user := &repository.User{
-			Username:    "testuser",
+			Username: "testuser",
 			Password: "qwerty123",
 			Email:    "testuser@example.com",
 		}

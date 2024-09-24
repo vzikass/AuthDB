@@ -12,12 +12,15 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-var testDB *sql.DB
+var (
+	testDB *sql.DB
+	dsn = "postgres://postgres:193566@localhost:5432/testdb?sslmode=disable"
+)
 
 func TestMain(m *testing.M) {
 	var err error
 
-	testDB, err = sql.Open("postgres", "user=postgres dbname=testdb sslmode=disable")
+	testDB, err = sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("Failed to connect to test database: %v", err)
 	}
@@ -27,11 +30,11 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Failed to get current directory: %v", err)
 	}
-	migrationDir := filepath.Join("/migrations")
+	migrationDir := filepath.Join(currentDir, "../../migrations")
 
 	log.Printf("Current directory: %v", currentDir)
 	log.Printf("Migration directory: %v", migrationDir)
-	
+
 	// up migrations
 	err = goose.Up(testDB, migrationDir)
 	if err != nil {

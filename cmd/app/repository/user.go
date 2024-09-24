@@ -10,10 +10,10 @@ import (
 )
 
 type User struct {
-	ID       int    `json:"id" db:"id"`
-	Username string `json:"username" db:"username"`
-	Password string `json:"password" db:"password"`
-	Email    string `json:"email" db:"email"`
+	ID        int       `json:"id" db:"id"`
+	Username  string    `json:"username" db:"username"`
+	Password  string    `json:"password" db:"password"`
+	Email     string    `json:"email" db:"email"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
@@ -31,9 +31,9 @@ func NewUser(username, email, password string) (*User, error) {
 	curTime := time.Now()
 	HashPassword = hashedPassword
 	user := &User{
-		Username: username,
-		Email:    email,
-		Password: hashedPassword,
+		Username:  username,
+		Email:     email,
+		Password:  hashedPassword,
 		CreatedAt: curTime,
 	}
 	return user, nil
@@ -56,7 +56,7 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 
 	for rows.Next() {
 		var user User
-		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password); err != nil {
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt); err != nil {
 			return nil, err
 		}
 		users = append(users, user)
@@ -73,10 +73,12 @@ func GetUserById(ctx context.Context, userID string) (u User, err error) {
 
 func (u *User) Add(ctx context.Context, tx pgx.Tx) (err error) {
 	if tx != nil {
-		_, err := tx.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", u.Username, u.Email, u.Password)
+		_, err := tx.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
+			u.Username, u.Email, u.Password)
 		return err
 	} else {
-		_, err := Dbpool.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", u.Username, u.Email, u.Password)
+		_, err := Dbpool.Exec(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
+			u.Username, u.Email, u.Password)
 		return err
 	}
 }
