@@ -8,6 +8,3 @@ create table if not exists users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 -- +goose StatementEnd
-
-create index users_username_idx on users(LOWER(username));
-create index users_email_idx on users(LOWER(email));
