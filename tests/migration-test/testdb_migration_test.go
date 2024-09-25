@@ -14,13 +14,13 @@ import (
 
 var (
 	testDB *sql.DB
-	dsn = "postgres://postgres:193566@localhost:5432/testdb?sslmode=disable"
+	dbURL = "postgres://postgres:193566@localhost:5433/testdb?sslmode=disable"
 )
 
 func TestMain(m *testing.M) {
 	var err error
 
-	testDB, err = sql.Open("postgres", dsn)
+	testDB, err = sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("Failed to connect to test database: %v", err)
 	}
