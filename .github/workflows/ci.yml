@@ -69,17 +69,12 @@ jobs:
         while ! pg_isready -h localhost -p 5432 -U postgres; do
           sleep 1
         done
-        sleep 5
       
     - name: Wait for Postgres (testdb)...
       run: |
         while ! pg_isready -h localhost -p 5432 -U postgres; do
           sleep 1
         done
-        sleep 5
-
-    - name: Run migrations
-      run: go run ./migrations/migrations.go
 
     - name: Run tests
       run: go test -v ./...
