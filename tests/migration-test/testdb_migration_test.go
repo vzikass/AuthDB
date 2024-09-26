@@ -14,7 +14,7 @@ import (
 
 var (
 	testDB *sql.DB
-	dbURL = "postgres://postgres:193566@localhost:5433/testdb?sslmode=disable"
+	dbURL = "postgres://postgres:193566@localhost:5432/testdb?sslmode=disable"
 )
 
 func TestMain(m *testing.M) {
