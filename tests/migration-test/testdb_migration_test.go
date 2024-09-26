@@ -1,4 +1,3 @@
-// verification of correct connection and execution of migrations
 package tests
 
 import (
@@ -14,13 +13,13 @@ import (
 
 var (
 	testDB *sql.DB
-	dsn = "postgres://postgres:193566@localhost:5432/testdb?sslmode=disable"
+	dbURL  = "postgres://postgres:193566@localhost:5432/testdb?sslmode=disable"
 )
 
-func TestMain(m *testing.M) {
+func TestMigration(t *testing.T) {
 	var err error
 
-	testDB, err = sql.Open("postgres", dsn)
+	testDB, err = sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("Failed to connect to test database: %v", err)
 	}
@@ -35,23 +34,18 @@ func TestMain(m *testing.M) {
 	log.Printf("Current directory: %v", currentDir)
 	log.Printf("Migration directory: %v", migrationDir)
 
-	// up migrations
+	if _, err := os.Stat(migrationDir); os.IsNotExist(err) {
+		log.Fatalf("Migrations directory does not exist: %v", migrationDir)
+	}
+
 	err = goose.Up(testDB, migrationDir)
 	if err != nil {
 		log.Fatalf("Failed to apply migrations: %v", err)
 	}
 
-	if _, err := os.Stat(migrationDir); os.IsNotExist(err) {
-		log.Fatalf("Migrations directory does not exist: %v", migrationDir)
-	}
-
-	code := m.Run()
-
-	// down migrations
 	err = goose.Down(testDB, migrationDir)
 	if err != nil {
 		log.Fatalf("Failed to rollback migrations: %v", err)
 	}
 
-	os.Exit(code)
 }
