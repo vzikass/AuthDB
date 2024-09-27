@@ -77,11 +77,6 @@ jobs:
           sleep 2
         done
 
-    - name: Create testdb
-      run: |
-        PGPASSWORD=193566 psql -h localhost -p 5433 -U postgres -c "CREATE DATABASE testdb;"
-  
-
     - name: Run tests
       run: go test -v ./...
 
