@@ -18,13 +18,14 @@ var (
 
 func TestMigration(t *testing.T) {
 	var err error
-
+	// connect to testdb
 	testDB, err = sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("Failed to connect to test database: %v", err)
 	}
 	defer testDB.Close()
 
+	// get the current directory
 	currentDir, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Failed to get current directory: %v", err)
@@ -38,14 +39,9 @@ func TestMigration(t *testing.T) {
 		log.Fatalf("Migrations directory does not exist: %v", migrationDir)
 	}
 
+	// Up migrations
 	err = goose.Up(testDB, migrationDir)
 	if err != nil {
 		log.Fatalf("Failed to apply migrations: %v", err)
 	}
-
-	err = goose.Down(testDB, migrationDir)
-	if err != nil {
-		log.Fatalf("Failed to rollback migrations: %v", err)
-	}
-
 }

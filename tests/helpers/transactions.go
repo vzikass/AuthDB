@@ -24,6 +24,7 @@ func clearDatabase(t *testing.T, pool *pgxpool.Pool) {
 
 func RunWithTransactions(t *testing.T, fn func(tx pgx.Tx) error) {
 	ctx := context.Background()
+	
 	pool, err := repository.InitDBConn(context.Background(), dbURL)
 	if err != nil {
 		log.Fatalf("Error initializing Test DB connection: %v\n", err)
