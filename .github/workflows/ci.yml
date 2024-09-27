@@ -79,7 +79,8 @@ jobs:
 
     - name: Create testdb
       run: |
-        psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE testdb;"
+        PGPASSWORD=193566 psql -h localhost -p 5433 -U postgres -c "CREATE DATABASE testdb;"
+  
 
     - name: Run tests
       run: go test -v ./...
