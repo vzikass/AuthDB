@@ -67,15 +67,19 @@ jobs:
 
     - name: Wait for Postgres (maindb)...
       run: |
-        while ! pg_isready -h localhost -p 5432 -U postgres; do
-          sleep 1
+        until pg_isready -h localhost -p 5432 -U postgres; do
+          sleep 2
         done
       
     - name: Wait for Postgres (testdb)...
       run: |
-        while ! pg_isready -h localhost -p 5433 -U postgres; do
-          sleep 1
+        until pg_isready -h localhost -p 5432 -U postgres; do
+          sleep 2
         done
+
+    - name: Create testdb
+      run: |
+        psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE testdb;"
 
     - name: Run tests
       run: go test -v ./...
