@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	dbURL = "postgres://postgres:193566@testdb:5432/testdb?sslmode=disable"
+	dbURL = "postgres://postgres:193566@localhost:5433/testdb?sslmode=disable"
 )
 
 // func to clear the db
