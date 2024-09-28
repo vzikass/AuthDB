@@ -45,7 +45,7 @@ func TestNewUser(t *testing.T) {
 		username := "testuser"
 		password := "qwerty123"
 		email := "testuser@example.com"
-		
+
 		user, err := repository.NewUser(username, email, password)
 		if err != nil {
 			return fmt.Errorf("failed to create user: %v", err)
@@ -109,7 +109,7 @@ func TestGetUserByID(t *testing.T) {
 		userID := user.ID
 
 		u, err := repo.GetByID(ctx, tx, userID)
-		
+
 		if err != nil {
 			log.Fatalf("Failed to get user by id: %v", err)
 		}

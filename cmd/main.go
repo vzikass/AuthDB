@@ -52,6 +52,7 @@ func main() {
 			log.Fatalf("Main server failed: %v", err)
 		}
 	}()
+
 	// Graceful shutdown
 	// we need to reserve to buffer size 1, so the notifier are not blocked
 	exit := make(chan os.Signal, 1)
