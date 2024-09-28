@@ -34,7 +34,7 @@ _also if you go to http://localhost:4444/users you can see your account and othe
 + Git/Github
 + Postman
 + Markdown
-+ Testing (with database for tests)
++ Testing (several different tests)
 + Kafka (simple configuration)
 + Mocks ([sarama](https://github.com/IBM/sarama))
   
