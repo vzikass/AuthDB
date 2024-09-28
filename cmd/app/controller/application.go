@@ -55,6 +55,7 @@ func (a *App) Routes(r *httprouter.Router) {
 	}))
 	r.GET("/logout", a.authorized(a.Logout))
 
+	// View all users (front by bootstrap)
 	r.GET("/users", a.authorized(GetAllUsers))
 }
 
