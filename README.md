@@ -61,7 +61,7 @@ Application will be available at [localhost:4444](http://localhost:4444)
 
 ## Testing
 *Added testing of some functionality*\
-You can check it :point_right: [here](https://github.com/vzikass/AuthDB/blob/main/authdb_test.go) :point_left:
+You can check it :point_right: [here](https://github.com/vzikass/AuthDB/tree/main/tests) :point_left:
 
 
 ## Achievements
