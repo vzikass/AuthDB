@@ -14,11 +14,13 @@ type User struct {
 	Username  string    `json:"username" db:"username"`
 	Password  string    `json:"password" db:"password"`
 	Email     string    `json:"email" db:"email"`
+	Role      string    `json:"role" db:"role"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
 var (
 	HashPassword string
+	Role = "user"
 )
 
 // Creating new user.
@@ -34,6 +36,7 @@ func NewUser(username, email, password string) (*User, error) {
 		Username:  username,
 		Email:     email,
 		Password:  hashedPassword,
+		Role: Role,
 		CreatedAt: curTime,
 	}
 	return user, nil
@@ -56,7 +59,7 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 
 	for rows.Next() {
 		var user User
-		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt); err != nil {
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt, &user.Role); err != nil {
 			return nil, err
 		}
 		users = append(users, user)

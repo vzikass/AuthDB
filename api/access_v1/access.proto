@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package access;
+
+option go_package = "/Users/vyacheslavivkin/Desktop/dev/go/AuthDB;access";
+
+service AuthService {
+    rpc CheckAccess (AccessRequest) returns (AccessResponse);
+}
+
+message AccessRequest {
+    string token = 1;
+    string required_role = 2;
+}
+
+message AccessResponse {
+    bool has_access = 1;
+    string message = 2;
+}

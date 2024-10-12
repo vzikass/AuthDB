@@ -56,9 +56,15 @@ func (r *Repository) GetByID(ctx context.Context, tx pgx.Tx, id int) (user User,
 	query := `select * from users where id = $1`
 
 	if tx != nil {
-		err = tx.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt)
+		err = tx.QueryRow(ctx, query, id).Scan(
+			&user.ID, &user.Username, &user.Email,
+			&user.Password, &user.CreatedAt, &user.Role,
+		)
 	} else {
-		err = r.pool.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt)
+		err = r.pool.QueryRow(ctx, query, id).Scan(
+			&user.ID, &user.Username, &user.Email,
+			&user.Password, &user.CreatedAt, &user.Role,
+		)
 	}
 	if err != nil {
 		return user, err
@@ -68,7 +74,7 @@ func (r *Repository) GetByID(ctx context.Context, tx pgx.Tx, id int) (user User,
 
 func (r *Repository) DeleteUserByID(ctx context.Context, id int) error {
 	query := `delete from users where id = $1`
-	
+
 	_, err := r.pool.Exec(ctx, query, id)
 	return err
 }
@@ -103,6 +109,16 @@ func (r *Repository) FindUserByLogin(ctx context.Context, username string) (u Us
 		username)
 	err = row.Scan(&u.ID, &u.Username, &u.Email, &u.Password)
 	if err != nil {
+		return u, fmt.Errorf("failed to query data: %v", err)
+	}
+	return u, nil
+}
+
+func (r *Repository) FindUserByID(ctx context.Context, userID int) (u User, err error) {
+	row := r.pool.QueryRow(ctx, "select id, username, role from users where id = $1",
+		userID)
+	err = row.Scan(&u.ID, &u.Username, &u.Role)
+	if err != nil{
 		return u, fmt.Errorf("failed to query data: %v", err)
 	}
 	return u, nil
