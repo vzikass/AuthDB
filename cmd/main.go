@@ -5,6 +5,7 @@ import (
 	"AuthDB/cmd/app/repository"
 	"AuthDB/cmd/internal/config"
 	"AuthDB/cmd/internal/kafka"
+	useraccess "AuthDB/internal/user_access"
 	"context"
 	"log"
 	"net/http"
@@ -50,6 +51,26 @@ func main() {
 		log.Println("Starting main HTTP server on port 4444")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Main server failed: %v", err)
+		}
+	}()
+
+	// Create an AccessService instance
+	accessService := &useraccess.AccessService{}
+
+	// Load env from .env
+	if err := config.Load("/app/configs/grpc.env"); err != nil {
+		log.Fatalf("failed to load .env: %v", err)
+	}
+
+	port := os.Getenv("GRPC_PORT")
+	if port == "" {
+		log.Fatalf("GRPC_PORT not set")
+	}
+
+	// Running grpc in a separate goroutine
+	go func() {
+		if err := useraccess.StartGRPCServer(":"+port, accessService); err != nil {
+			log.Fatalf("Failed to start grpc server: %v", err)
 		}
 	}()
 

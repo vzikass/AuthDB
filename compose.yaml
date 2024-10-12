@@ -6,7 +6,7 @@ services:
     image: postgres:latest
     container_name: maindb
     ports:
-      - "5432:5432"
+      - "5434:5432"
     environment:
       POSTGRES_HOST_AUTH_METHOD: md5
       PGDATA: /var/lib/postgresql/data/pgdata
@@ -139,6 +139,7 @@ services:
       DATABASE_URL: postgres://postgres:193566@maindb:5432/AuthDB
       TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb
       KAFKA_BROKERS: kafka-1:9092,kafka-2:9093
+      GRPC_PORT: "50051"
     depends_on:
       maindb: 
         condition: service_healthy
@@ -151,7 +152,6 @@ services:
     restart: unless-stopped
     env_file:
       - ./configs/db.env
-      - ./configs/jwt.env
     networks:
       - mynetwork
 
