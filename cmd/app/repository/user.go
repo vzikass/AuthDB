@@ -3,6 +3,7 @@ package repository
 import (
 	"AuthDB/utils"
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -10,17 +11,17 @@ import (
 )
 
 type User struct {
-	ID        int       `json:"id" db:"id"`
-	Username  string    `json:"username" db:"username"`
-	Password  string    `json:"password" db:"password"`
-	Email     string    `json:"email" db:"email"`
-	Role      string    `json:"role" db:"role"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	ID        int        `json:"id" db:"id"`
+	Username  string     `json:"username" db:"username"`
+	Password  string     `json:"password" db:"password"`
+	Email     string     `json:"email" db:"email"`
+	Role      string     `json:"role" db:"role"`
+	CreatedAt *time.Time `json:"created_at" db:"created_at"`
 }
 
 var (
 	HashPassword string
-	Role = "user"
+	Role         = "user"
 )
 
 // Creating new user.
@@ -36,8 +37,8 @@ func NewUser(username, email, password string) (*User, error) {
 		Username:  username,
 		Email:     email,
 		Password:  hashedPassword,
-		Role: Role,
-		CreatedAt: curTime,
+		Role:      Role,
+		CreatedAt: &curTime,
 	}
 	return user, nil
 }
@@ -59,8 +60,14 @@ func GetAllUsers(ctx context.Context, tx pgx.Tx) ([]User, error) {
 
 	for rows.Next() {
 		var user User
-		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt, &user.Role); err != nil {
+		var createdAt sql.NullTime
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt); err != nil {
 			return nil, err
+		}
+		if createdAt.Valid {
+			user.CreatedAt = &createdAt.Time
+		} else {
+			user.CreatedAt = nil
 		}
 		users = append(users, user)
 	}
