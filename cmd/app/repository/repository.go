@@ -58,12 +58,12 @@ func (r *Repository) GetByID(ctx context.Context, tx pgx.Tx, id int) (user User,
 	if tx != nil {
 		err = tx.QueryRow(ctx, query, id).Scan(
 			&user.ID, &user.Username, &user.Email,
-			&user.Password, &user.CreatedAt, &user.Role,
+			&user.Password, &user.Role, &user.CreatedAt,
 		)
 	} else {
 		err = r.pool.QueryRow(ctx, query, id).Scan(
 			&user.ID, &user.Username, &user.Email,
-			&user.Password, &user.CreatedAt, &user.Role,
+			&user.Password, &user.Role, &user.CreatedAt,
 		)
 	}
 	if err != nil {

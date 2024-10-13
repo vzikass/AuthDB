@@ -37,6 +37,7 @@ _also if you go to http://localhost:4444/users you can see your account and othe
 + Testing (several different tests)
 + Kafka (simple configuration)
 + Mocks ([sarama](https://github.com/IBM/sarama))
++ gRPC
   
 And other things I've encountered in the writing process.
 
@@ -78,6 +79,7 @@ You can check it :point_right: [here](https://github.com/vzikass/AuthDB/blob/mai
 * Front: [_bootstrap_](https://getbootstrap.com/), _html_ (some helpful youtube videos i used: [1](https://www.youtube.com/watch?v=hlwlM4a5rxg), [2](https://www.youtube.com/watch?v=EzXdxvO1htA&t=672s)), _css_
 * CI/CD ([Github Actions](https://docs.github.com/en/actions))
 * Postman
+* gRPC ([grpc-go](https://github.com/grpc/grpc-go))
 * And probabbly something else I forgot
   
 ## Why did I develop this project?  
