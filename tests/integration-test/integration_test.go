@@ -5,16 +5,21 @@ package integrationtest
 import (
 	"AuthDB/cmd/app/controller/helper"
 	"AuthDB/cmd/app/repository"
+	useraccess "AuthDB/internal/user_access"
 	"AuthDB/tests/helpers"
 	"AuthDB/utils"
 	"context"
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v4"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -312,4 +317,32 @@ func TestIsValidPassword(t *testing.T) {
 		}
 		return nil
 	})
+}
+
+// gRPC StartServer func test
+
+func TestStartGRPCServer(t *testing.T) {
+	port := ":50052"
+	gRPCServer := grpc.NewServer()
+	accessService := &useraccess.AccessService{}
+
+	useraccess.Register(gRPCServer, accessService)
+
+	lis, err := net.Listen("tcp", port)
+	require.NoError(t, err, "failed to listen on port")
+
+	go func() {
+		if err := gRPCServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, port, grpc.WithInsecure(), grpc.WithBlock())
+	require.NoError(t, err, "failed to connect to gRPC server")
+	defer conn.Close()
+
+	gRPCServer.Stop()
 }
