@@ -18,7 +18,7 @@
 ![Preview of the Main page](/public/jpg/main.png)
 _logout, delete account and update data, these buttons work and perform their functionality_
 
-_also if you go to http://localhost:4444/users you can see your account and other users_
+_also if you go to http://localhost:4444/users you can see your account info_
 
 -----------
 
@@ -62,7 +62,7 @@ Application will be available at [localhost:4444](http://localhost:4444)
 
 ## Testing
 *Added testing of some functionality*\
-You can check it :point_right: [here](https://github.com/vzikass/AuthDB/blob/main/authdb_test.go) :point_left:
+You can check it :point_right: [here](https://github.com/vzikass/AuthDB/tree/main/tests) :point_left:
 
 
 ## Achievements
