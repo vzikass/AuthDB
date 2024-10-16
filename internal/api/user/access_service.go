@@ -1,11 +1,11 @@
-package useraccess
+package user
 
 import (
 	"AuthDB/internal/helper"
-	pb "AuthDB/pkg/access_v1"
 	"context"
 	"log"
 	"net"
+	pb "AuthDB/pkg/user_v1"
 
 	"google.golang.org/grpc"
 )
@@ -40,7 +40,7 @@ func (s *AccessService) CheckAccess(ctx context.Context, req *pb.AccessRequest) 
 	}, nil
 }
 
-func StartGRPCServer(port string, accessService *AccessService) error{
+func StartGRPCServer(port string, accessService *AccessService) error {
 	grpcServer := grpc.NewServer()
 
 	Register(grpcServer, accessService)
@@ -49,9 +49,9 @@ func StartGRPCServer(port string, accessService *AccessService) error{
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	if err := grpcServer.Serve(lis); err != nil{
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-	
+
 	return nil
 }

@@ -5,7 +5,7 @@ import (
 	"AuthDB/cmd/app/repository"
 	"AuthDB/cmd/internal/config"
 	"AuthDB/cmd/internal/kafka"
-	useraccess "AuthDB/internal/user_access"
+	useraccess "AuthDB/internal/api/user"
 	"context"
 	"log"
 	"net/http"

@@ -5,7 +5,7 @@ package integrationtest
 import (
 	"AuthDB/cmd/app/controller/helper"
 	"AuthDB/cmd/app/repository"
-	useraccess "AuthDB/internal/user_access"
+	user "AuthDB/internal/api/user"
 	"AuthDB/tests/helpers"
 	"AuthDB/utils"
 	"context"
@@ -324,9 +324,9 @@ func TestIsValidPassword(t *testing.T) {
 func TestStartGRPCServer(t *testing.T) {
 	port := ":50052"
 	gRPCServer := grpc.NewServer()
-	accessService := &useraccess.AccessService{}
+	accessService := &user.AccessService{}
 
-	useraccess.Register(gRPCServer, accessService)
+	user.Register(gRPCServer, accessService)
 
 	lis, err := net.Listen("tcp", port)
 	require.NoError(t, err, "failed to listen on port")
