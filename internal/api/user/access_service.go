@@ -2,10 +2,10 @@ package user
 
 import (
 	"AuthDB/internal/helper"
+	pb "AuthDB/pkg/user_v1"
 	"context"
 	"log"
 	"net"
-	pb "AuthDB/pkg/user_v1"
 
 	"google.golang.org/grpc"
 )

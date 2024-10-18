@@ -1,48 +1,21 @@
-// Integration tests to check the connection to the test database
-// Work with transactions
-package integrationtest
+package usertest
 
 import (
-	"AuthDB/cmd/app/controller/helper"
 	"AuthDB/cmd/app/repository"
-	user "AuthDB/internal/api/user"
 	"AuthDB/tests/helpers"
 	"AuthDB/utils"
 	"context"
 	"errors"
 	"fmt"
 	"log"
-	"net"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/jackc/pgx/v4"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
 )
 
 var (
 	ErrUserNotFound = errors.New("user not found")
 )
-
-// DB connection test (wrong connection)
-func TestInitDBConn_InvalidURL(t *testing.T) {
-	ctx := context.Background()
-	invalidURL := "invalidUrl"
-
-	_, err := repository.InitDBConn(ctx, invalidURL)
-	if err == nil {
-		t.Fatal("Expected error but got nil")
-	}
-
-	expectedErrMsg := "failed to parse pg config"
-	if !strings.Contains(err.Error(), expectedErrMsg) {
-		t.Errorf("Expected error message to contain '%s', got '%s'", expectedErrMsg, err.Error())
-	}
-}
-
-// -----------------------
 
 // User tests (using test db)
 func TestNewUser(t *testing.T) {
@@ -297,52 +270,4 @@ func TestUserNotExist(t *testing.T) {
 		}
 		return err
 	})
-}
-
-func TestIsValidPassword(t *testing.T) {
-	helpers.RunWithTransactions(t, func(tx pgx.Tx) error {
-		ctx := context.Background()
-		user := &repository.User{
-			Username: "testuser",
-			Password: "qwerty123",
-			Email:    "testuser@example.com",
-		}
-
-		if err := user.Add(ctx, tx); err != nil {
-			t.Fatalf("Failed to add user: %v", err)
-		}
-
-		if !helper.IsValidPassword(user.Password) {
-			t.Errorf("Password is not valid")
-		}
-		return nil
-	})
-}
-
-// gRPC StartServer func test
-
-func TestStartGRPCServer(t *testing.T) {
-	port := ":50052"
-	gRPCServer := grpc.NewServer()
-	accessService := &user.AccessService{}
-
-	user.Register(gRPCServer, accessService)
-
-	lis, err := net.Listen("tcp", port)
-	require.NoError(t, err, "failed to listen on port")
-
-	go func() {
-		if err := gRPCServer.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
-		}
-	}()
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	conn, err := grpc.DialContext(ctx, port, grpc.WithInsecure(), grpc.WithBlock())
-	require.NoError(t, err, "failed to connect to gRPC server")
-	defer conn.Close()
-
-	gRPCServer.Stop()
 }
