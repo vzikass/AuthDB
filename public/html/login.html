@@ -129,6 +129,34 @@
         .register-link p a:hover {
             text-decoration: underline;
         }
+        .oauth-buttons {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+
+        .oauth-btn {
+            display: inline-block;
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .oauth-yandex {
+            background-color: #ffcc00; 
+        }
+        /* .oauth-vk {
+            background-color: #4c75a3;
+        } */
+        .oauth-github {
+            background-color: #333; 
+        }
+    
     </style>
 </head>
 <body>
@@ -154,6 +182,11 @@
 <div class="register-link">
     <p>Don't have an account? <a href="/signup">Register</a></p>
 </div>
+<div class="oauth-buttons">
+    <a href="/auth/yandex" class="oauth-btn oauth-yandex">Continue with Yandex</a>
+    <!-- <a href="/auth/vk" class="oauth-btn oauth-vk">Continue with VK</a> -->
+    <a href="/auth/github" class="oauth-btn oauth-github">Continue with GitHub</a>
+  </div>
 </form>
 {{if . }}
 <div>

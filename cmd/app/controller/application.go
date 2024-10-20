@@ -12,12 +12,18 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/julienschmidt/httprouter"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/github"
+	"github.com/markbates/goth/providers/yandex"
 )
 
 type App struct {
@@ -57,6 +63,11 @@ func (a *App) Routes(r *httprouter.Router) {
 
 	// View all users (front by bootstrap)
 	r.GET("/users", a.authorized(GetAllUsers))
+
+	r.POST("/auth/:provider/callback", a.authCallbackHandlerForRouter)
+	r.GET("/auth/:provider", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		gothic.BeginAuthHandler(w, r)
+	})
 }
 
 func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -164,7 +175,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 	}
 
 	if userExist {
-		a.SignupPage(w, "User already created")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
@@ -494,4 +505,64 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
 		fmt.Println("Failed to produce Kafka message:", err)
 	}
+}
+
+func (a *App) authCallbackHandler(w http.ResponseWriter, r *http.Request) {
+	user, err := gothic.CompleteUserAuth(w, r)
+	if err != nil {
+		http.Error(w, "OAuth authentication failed", http.StatusInternalServerError)
+		return
+	}
+
+	userExist, err := a.repo.UserExist(a.ctx, nil, user.FirstName, user.Email)
+	if err != nil {
+		http.Error(w, "Error checking existing user", http.StatusInternalServerError)
+		return
+	}
+
+	if userExist {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	newUser := repository.User{
+		Username: user.FirstName,
+		Email:    user.Email,
+		Password: "",
+	}
+
+	err = newUser.Add(a.ctx, nil)
+	if err != nil {
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		return
+	}
+
+	message := kafka.Message{
+		Value: []byte(fmt.Sprintf(`{
+			"event": "signup",
+			"user_id": "%s",
+			"email": "%s",
+			"timestamp": "%s"
+		}`, user.UserID, user.Email, time.Now().UTC().Format(time.RFC3339))),
+	}
+
+	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
+		log.Println("Failed to produce Kafka message:", err)
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+func (a *App) authCallbackHandlerForRouter(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	a.authCallbackHandler(w, r)
+}
+
+func (a *App) InitAuthProviders(r *mux.Router) {
+	goth.UseProviders(
+		yandex.New(os.Getenv("YANDEX_CLIENT_KEY"), os.Getenv("YANDEX_SECRET"), "http://localhost:4444/auth/yandex/callback"),
+		// vk.New("client-id", "client-secret", "http://localhost:4444/auth/vk/callback"),
+		github.New(os.Getenv("GITHUB_CLIENT_KEY"), os.Getenv("GITHUB_SECRET"), "http://localhost:4444/auth/github/callback"),
+	)
+
+	r.HandleFunc("/auth/{provider}/callback", a.authCallbackHandler)
+	r.HandleFunc("/auth/{provider}", gothic.BeginAuthHandler)
 }
