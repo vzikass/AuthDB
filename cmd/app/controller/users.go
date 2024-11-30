@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 )
 
-func GetAllUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	users, err := repository.GetAllUsers(ctx, nil)
 	if err != nil {
@@ -32,7 +32,7 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 }
 
-func AddUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func AddUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	username := r.FormValue("username")
 	email := r.FormValue("email")
@@ -58,23 +58,29 @@ func AddUsers(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	}
 }
 
-func DeleteUserByID(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	userId := p.ByName("userID")
+func DeleteUserByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userId := vars["userID"]
+
 	ctx := context.Background()
 	user, err := repository.GetUserById(ctx, userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	userID, err := strconv.Atoi(userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+
 	err = user.DeleteByID(ctx, nil, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	err = json.NewEncoder(w).Encode("User deleted successfully")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

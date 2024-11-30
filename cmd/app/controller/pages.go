@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 func (a *App) SignupPage(w http.ResponseWriter, message string) {
@@ -76,7 +74,7 @@ func (a *App) UpdateUserPage(w http.ResponseWriter, message string) {
 	}
 }
 
-func (a *App) HomePage(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (a *App) HomePage(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles(
 		filepath.Join("public", "html", "main.html"),
 		filepath.Join("public", "html", "delete.html"),

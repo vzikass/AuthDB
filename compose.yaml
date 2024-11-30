@@ -140,6 +140,11 @@ services:
       TESTDB_URL: postgres://postgres:193566@testdb:5432/testdb
       KAFKA_BROKERS: kafka-1:9092,kafka-2:9093
       GRPC_PORT: "50051"
+      SESSION_SECRET: uUS3HWQsOt93QnZSzAUbPJAFwL48FoWnkad9fIDOyeE
+      YANDEX_CLIENT_KEY: b321069bf3ff4636ab2543e75506287b
+      YANDEX_SECRET: 98ec131c31b3493fbb82c6e8aa47753c
+      GITHUB_CLIENT_KEY: Ov23linwHuDXlRBpK1kA
+      GITHUB_SECRET: 00892001ec3b19b9e0b9b39bd6f5c9d70d0e3f94
     depends_on:
       maindb: 
         condition: service_healthy

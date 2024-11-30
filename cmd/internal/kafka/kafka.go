@@ -46,7 +46,7 @@ type Message struct {
 	Value []byte
 }
 
-func InitKafka() (producer sarama.SyncProducer, consumer sarama.Consumer) {
+func InitKafka() (producer sarama.SyncProducer, consumer sarama.Consumer, err error) {
 	// Producer initialization
 	producercfg := sarama.NewConfig()
 	producercfg.Producer.Return.Successes = true
@@ -65,5 +65,5 @@ func InitKafka() (producer sarama.SyncProducer, consumer sarama.Consumer) {
 		log.Fatalln("Failed to start Sarama consumer:", err)
 	}
 	Consumer = Consumer1
-	return Producer1, Consumer1
+	return Producer1, Consumer1, nil
 }
