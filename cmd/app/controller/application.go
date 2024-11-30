@@ -12,65 +12,61 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/julienschmidt/httprouter"
-	"github.com/markbates/goth"
-	"github.com/markbates/goth/gothic"
-	"github.com/markbates/goth/providers/github"
-	"github.com/markbates/goth/providers/yandex"
 )
 
 type App struct {
 	ctx     context.Context
 	repo    *repository.Repository
-	cache   map[string]repository.User
+	cache   map[string]*repository.User
 	cacheMu sync.Mutex
 }
 
 func NewApp(ctx context.Context, dbpool *pgxpool.Pool) *App {
 	return &App{ctx: ctx, repo: repository.NewRepository(dbpool),
-		cache: make(map[string]repository.User)}
+		cache: make(map[string]*repository.User)}
 }
 
-func (a *App) Routes(r *httprouter.Router) {
-	r.ServeFiles("/public/*filepath", http.Dir("public"))
+var (
+	AdminMux = mux.NewRouter()
+)
 
-	r.GET("/", a.authorized(a.HomePage))
+func (a *App) Routes(r *mux.Router) {
+	r.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
-	r.POST("/signup", a.Signup)
-	r.GET("/signup", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	r.HandleFunc("/", a.wrapHandler(a.authorized(a.HomePage))).Methods("GET")
+
+	r.HandleFunc("/signup", a.wrapHandler(a.Signup)).Methods("POST")
+	r.HandleFunc("/signup", func(w http.ResponseWriter, r *http.Request) {
 		a.SignupPage(w, "")
-	})
-	r.POST("/login", a.Login)
-	r.GET("/login", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	}).Methods("GET")
+
+	r.HandleFunc("/login", a.wrapHandler(a.Login)).Methods("POST")
+	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		a.LoginPage(w, "")
-	})
-	r.POST("/delete", a.authorized(a.DeleteAccount))
-	r.GET("/delete", a.authorized(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	}).Methods("GET")
+
+	r.HandleFunc("/delete", a.wrapHandler(a.authorized(a.DeleteAccount))).Methods("POST")
+	r.HandleFunc("/delete", a.wrapHandler(a.authorized(func(w http.ResponseWriter, r *http.Request) {
 		a.RenderDeleteConfirmationPage(w)
-	}))
-	r.POST("/update", a.authorized(a.UpdateData))
-	r.GET("/update", a.authorized(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	}))).Methods("GET")
+
+	r.HandleFunc("/update", a.wrapHandler(a.authorized(a.UpdateData))).Methods("POST")
+	r.HandleFunc("/update", a.wrapHandler(a.authorized(func(w http.ResponseWriter, r *http.Request) {
 		a.UpdateUserPage(w, "")
-	}))
-	r.GET("/logout", a.authorized(a.Logout))
+	}))).Methods("GET")
 
-	// View all users (front by bootstrap)
-	r.GET("/users", a.authorized(GetAllUsers))
+	r.HandleFunc("/logout", a.wrapHandler((a.authorized(a.Logout)))).Methods("GET")
 
-	r.POST("/auth/:provider/callback", a.authCallbackHandlerForRouter)
-	r.GET("/auth/:provider", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		gothic.BeginAuthHandler(w, r)
-	})
+	r.HandleFunc("/users", a.wrapHandler(a.authorized(GetAllUsers))).Methods("GET")
 }
 
-func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (a *App) Login(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
@@ -81,6 +77,10 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 
 	user, err := a.repo.Login(a.ctx, nil, username)
 	if err != nil {
+		log.Printf("Error querying user: %v", err)
+		return
+	}
+	if user == nil{
 		a.LoginPage(w, "User not found")
 		return
 	}
@@ -118,13 +118,12 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	// Create cookie
 	cookie := http.Cookie{
 		Name:     "token",
-		Value:    url.QueryEscape(token),
+		Value:    token,
 		Expires:  expiration,
-		Secure:   true,
+		Secure:   false,
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
-
 	// Creating kafka message
 	message := kafka.Message{
 		Value: []byte(fmt.Sprintf(`{
@@ -141,7 +140,7 @@ func (a *App) Login(w http.ResponseWriter, r *http.Request, p httprouter.Params)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (a *App) Signup(w http.ResponseWriter, r *http.Request) {
 	user := repository.User{}
 	username := strings.TrimSpace(r.FormValue("username"))
 	email := strings.TrimSpace(r.FormValue("email"))
@@ -222,7 +221,7 @@ func (a *App) Signup(w http.ResponseWriter, r *http.Request, p httprouter.Params
 
 // A simple function to delete a user's cookie
 // To log him out
-func (a *App) Logout(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (a *App) Logout(w http.ResponseWriter, r *http.Request) {
 	for _, v := range r.Cookies() {
 		c := http.Cookie{
 			Name:   v.Name,
@@ -256,8 +255,8 @@ func ReadCookie(name string, r *http.Request) (value string, err error) {
 }
 
 // check user authorization
-func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (a *App) authorized(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// read cookie, if err != nil, user is not authorized
 		// so redirect it to /login
 		token, err := ReadCookie("token", r)
@@ -278,12 +277,25 @@ func (a *App) authorized(next httprouter.Handle) httprouter.Handle {
 		}
 		// if ok == true (token found)
 		// continue processing the request
-		next(w, r, p)
+		next(w, r)
 	}
 }
 
+// func (a *App) isAuthorized(r *http.Request) bool {
+// 	token, err := ReadCookie("token", r)
+// 	if err != nil {
+// 		return false
+// 	}
+
+// 	a.cacheMu.Lock()
+// 	_, ok := a.cache[token]
+// 	a.cacheMu.Unlock()
+
+// 	return ok
+// }
+
 // delete account with user id
-func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (a *App) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	// read cookie
 	token, err := ReadCookie("token", r)
 	if err != nil {
@@ -454,7 +466,7 @@ func (a *App) UpdatePassword(w http.ResponseWriter, r *http.Request, newPassword
 	return err
 }
 
-func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (a *App) UpdateData(w http.ResponseWriter, r *http.Request) {
 	user := repository.User{}
 	// read lines
 	oldUsername := r.FormValue("oldUsername")
@@ -507,62 +519,78 @@ func (a *App) UpdateData(w http.ResponseWriter, r *http.Request, p httprouter.Pa
 	}
 }
 
-func (a *App) authCallbackHandler(w http.ResponseWriter, r *http.Request) {
-	user, err := gothic.CompleteUserAuth(w, r)
-	if err != nil {
-		http.Error(w, "OAuth authentication failed", http.StatusInternalServerError)
-		return
+// func (a *App) authCallbackHandler(w http.ResponseWriter, r *http.Request) {
+// 	user, err := gothic.CompleteUserAuth(w, r)
+// 	if err != nil {
+// 		http.Error(w, "OAuth authentication failed", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	userExist, err := a.repo.UserExist(a.ctx, nil, user.FirstName, user.Email)
+// 	if err != nil {
+// 		http.Error(w, "Error checking existing user", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	if userExist {
+// 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+// 		return
+// 	}
+
+// 	newUser := repository.User{
+// 		Username: user.FirstName,
+// 		Email:    user.Email,
+// 		Password: "",
+// 	}
+
+// 	err = newUser.Add(a.ctx, nil)
+// 	if err != nil {
+// 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	message := kafka.Message{
+// 		Value: []byte(fmt.Sprintf(`{
+// 			"event": "signup",
+// 			"user_id": "%s",
+// 			"email": "%s",
+// 			"timestamp": "%s"
+// 		}`, user.UserID, user.Email, time.Now().UTC().Format(time.RFC3339))),
+// 	}
+
+// 	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
+// 		log.Println("Failed to produce Kafka message:", err)
+// 	}
+
+// 	http.Redirect(w, r, "/", http.StatusSeeOther)
+// }
+// func (a *App) authCallbackHandlerForRouter(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+// 	a.authCallbackHandler(w, r)
+// }
+
+// func (a *App) InitAuthProviders(r *mux.Router) {
+// 	goth.UseProviders(
+// 		yandex.New(os.Getenv("YANDEX_CLIENT_KEY"), os.Getenv("YANDEX_SECRET"), "http://localhost:4444/auth/yandex/callback"),
+// 		github.New(os.Getenv("GITHUB_CLIENT_KEY"), os.Getenv("GITHUB_SECRET"), "http://localhost:4444/auth/github/callback"),
+// 	)
+
+// 	r.HandleFunc("GET /", a.authCallbackHandler)
+// 	r.HandleFunc("GET /auth/callback", a.authCallbackHandler)
+// r.HandleFunc("/auth/{provider}/callback", a.authCallbackHandler).Methods("GET")
+// r.HandleFunc("/auth/{provider}", func(w http.ResponseWriter, r *http.Request) {
+// 	provider, err := gothic.GetProviderName(r)
+// 	if err != nil {
+// 		log.Printf("Error getting provider: %s", err)
+// 		http.Error(w, "You must select a provider", http.StatusBadRequest)
+// 		return
+// 	}
+// 	log.Printf("Provider extracted: %s", provider)
+// 	gothic.BeginAuthHandler(w, r)
+// }).Methods("GET")
+// }
+
+func (a *App) wrapHandler(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r)
 	}
-
-	userExist, err := a.repo.UserExist(a.ctx, nil, user.FirstName, user.Email)
-	if err != nil {
-		http.Error(w, "Error checking existing user", http.StatusInternalServerError)
-		return
-	}
-
-	if userExist {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
-
-	newUser := repository.User{
-		Username: user.FirstName,
-		Email:    user.Email,
-		Password: "",
-	}
-
-	err = newUser.Add(a.ctx, nil)
-	if err != nil {
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
-		return
-	}
-
-	message := kafka.Message{
-		Value: []byte(fmt.Sprintf(`{
-			"event": "signup",
-			"user_id": "%s",
-			"email": "%s",
-			"timestamp": "%s"
-		}`, user.UserID, user.Email, time.Now().UTC().Format(time.RFC3339))),
-	}
-
-	if err := kafka.ProduceMessage(kafka.Brokers, kafka.Topic, string(message.Value)); err != nil {
-		log.Println("Failed to produce Kafka message:", err)
-	}
-
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-func (a *App) authCallbackHandlerForRouter(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	a.authCallbackHandler(w, r)
-}
-
-func (a *App) InitAuthProviders(r *mux.Router) {
-	goth.UseProviders(
-		yandex.New(os.Getenv("YANDEX_CLIENT_KEY"), os.Getenv("YANDEX_SECRET"), "http://localhost:4444/auth/yandex/callback"),
-		// vk.New("client-id", "client-secret", "http://localhost:4444/auth/vk/callback"),
-		github.New(os.Getenv("GITHUB_CLIENT_KEY"), os.Getenv("GITHUB_SECRET"), "http://localhost:4444/auth/github/callback"),
-	)
-
-	r.HandleFunc("/auth/{provider}/callback", a.authCallbackHandler)
-	r.HandleFunc("/auth/{provider}", gothic.BeginAuthHandler)
 }

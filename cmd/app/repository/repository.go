@@ -17,21 +17,25 @@ type Repository struct {
 func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
-func (r *Repository) Login(ctx context.Context, tx pgx.Tx, username string) (u User, err error) {
-	query := `select id, username, password, email from users where username = $1`
+func (r *Repository) Login(ctx context.Context, tx pgx.Tx, username string) (*User, error) {
+	query := `SELECT id, username, password, email FROM users WHERE username = $1`
+	u := User{}
 
+	var err error
 	if tx != nil {
 		err = tx.QueryRow(ctx, query, username).Scan(&u.ID, &u.Username, &u.Password, &u.Email)
 	} else {
 		err = r.pool.QueryRow(ctx, query, username).Scan(&u.ID, &u.Username, &u.Password, &u.Email)
 	}
+
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return u, nil
+			return nil, nil
 		}
-		return u, fmt.Errorf("failed to query data: %v", err)
+		return nil, err
 	}
-	return u, nil
+	
+	return &u, nil
 }
 
 // Checking if such a user already exists.
