@@ -6,6 +6,7 @@ import (
 	"AuthDB/cmd/internal/kafka"
 	useraccess "AuthDB/internal/api/user"
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -31,40 +32,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Load from .env file
-	if err := godotenv.Load("/app/configs/db.env", "/app/configs/grpc.env"); err != nil {
-		log.Fatalf("Failed to load .env file: %v", err)
-	}
-
-	// Connect db
-	dbpool, err := repository.InitDBConn(ctx, os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatalf("Error initializing DB connection: %v\n", err)
-	}
-	defer dbpool.Close()
-
-	// Init Kafka | producer | consumer
-	producer, consumer, err := kafka.InitKafka()
-	if err != nil {
-		log.Fatalf("Error initializing Kafka: %v", err)
-	}
-	defer producer.Close()
-	defer consumer.Close()
-
-	// Main app
-	// Initialize main application and router
-	app := controller.NewApp(ctx, dbpool)
-	mainRouter := mux.NewRouter()
-	app.Routes(mainRouter)
-
+func initGoAdmin(router *mux.Router, dbURL string) (*engine.Engine, error) {
 	// Parse DATABASE_URL for GoAdmin config
-	parsedURL, err := url.Parse(os.Getenv("DATABASE_URL"))
+	parsedURL, err := url.Parse(dbURL)
 	if err != nil {
-		log.Fatalf("Failed to parse DATABASE_URL: %v", err)
+		return nil, fmt.Errorf("failed to parse DATABASE_URL: %v", err)
 	}
 
 	user := parsedURL.User.Username()
@@ -98,8 +70,8 @@ func main() {
 		Theme:     "adminlte",
 		Language:  language.EN,
 	}
-	cfg.Debug = true
-	// Set up GoAdmin with plugins and templates
+
+	// Initialize GoAdmin engine
 	eng := engine.Default()
 	eng.AddAdapter(&gorilla.Gorilla{})
 
@@ -110,23 +82,65 @@ func main() {
 		AddDisplayFilterXssJsFilter().
 		AddGenerator("user", datamodel.GetUserTable).
 		AddPlugins(adminPlugin).
-		Use(mainRouter); err != nil {
-		panic(err)
+		Use(router); err != nil {
+		return nil, fmt.Errorf("failed to configure GoAdmin engine: %v", err)
 	}
+
 	template.AddComp(chartjs.NewChart())
 
-	// Main multiplexer with both admin and app routes
+	return eng, nil
+}
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Load from .env file
+	if err := godotenv.Load("/app/configs/db.env", "/app/configs/grpc.env"); err != nil {
+		log.Fatalf("Failed to load .env file: %v", err)
+	}
+
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatalf("DATABASE_URL is not set")
+	}
+
+	// Connect db
+	dbpool, err := repository.InitDBConn(ctx, dbURL)
+	if err != nil {
+		log.Fatalf("Error initializing DB connection: %v\n", err)
+	}
+	defer dbpool.Close()
+
+	// Init Kafka | producer | consumer
+	producer, consumer, err := kafka.InitKafka()
+	if err != nil {
+		log.Fatalf("Error initializing Kafka: %v", err)
+	}
+	defer producer.Close()
+	defer consumer.Close()
+
+	// Main app
+	// Initialize main application and router
+	app := controller.NewApp(ctx, dbpool)
+	mainRouter := mux.NewRouter()
+	app.Routes(mainRouter)
+
 	mainMux := http.NewServeMux()
+
+	_, err = initGoAdmin(mainRouter, dbURL)
+	if err != nil {
+		log.Fatalf("Error initializing GoAdmin: %v", err)
+	}
+	// Main multiplexer with both admin and app routes
 	mainMux.Handle("/", mainRouter) // Main app routes
-	mainMux.Handle("/admin/", http.StripPrefix("/admin", controller.AdminMux))
 
 	adminUser := &repository.User{
 		Username: "admin",
 		Password: "admin",
 	}
-	err = adminUser.AddAdminUser(context.Background(), dbpool, nil)
-	if err != nil {
-		log.Fatal("Failed to add admin user:", err)
+	if err = adminUser.AddAdminUser(context.Background(), dbpool, nil); err != nil {
+		log.Fatalf("Failed to add admin user: %v", err)
 	}
 
 	// HTTP Server
@@ -143,17 +157,15 @@ func main() {
 	}()
 
 	// gRPC Server
-	go func() {
-		port := os.Getenv("GRPC_PORT")
-		if port == "" {
-			log.Fatalf("GRPC_PORT not set")
-		}
-		// Create an AccessService instance
-		accessService := &useraccess.AccessService{}
-		if err := useraccess.StartGRPCServer(":"+port, accessService); err != nil {
-			log.Fatalf("Failed to start grpc server: %v", err)
-		}
-	}()
+	port := os.Getenv("GRPC_PORT")
+	if port == "" {
+		log.Fatalf("GRPC_PORT not set")
+	}
+	// Create an AccessService instance
+	accessService := &useraccess.AccessService{}
+	if err := useraccess.StartGRPCServer(":"+port, accessService); err != nil {
+		log.Fatalf("Failed to start grpc server: %v", err)
+	}
 
 	// Graceful shutdown
 	// we need to reserve to buffer size 1, so the notifier are not blocked
@@ -162,5 +174,34 @@ func main() {
 	signal.Notify(exit, os.Interrupt, syscall.SIGTERM)
 	// program is blocked until the channel receives a signal.
 	// waiting to receive a signal such as os.Interrupt or syscall.SIGTERM
-	<-exit
+	go func() {
+		<-exit
+		log.Println("Shutting down servers...")
+
+		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		// http server shutdown
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Printf("HTTP Server Shutdown Failed: %v", err)
+		}
+
+		// Kafka shutdown
+		log.Println("Closing Kafka producer and consumer...")
+		if err := producer.Close(); err != nil {
+			log.Printf("Kafka producer close failed: %v", err)
+		}
+		if err := consumer.Close(); err != nil {
+			log.Printf("Kafka consumer close failed: %v", err)
+		}
+
+		// Close the db connection
+		log.Println("Closing database connection pool...")
+		dbpool.Close()
+
+		// cancel app ctx
+		cancel()
+
+		log.Println("Shutdown complete.")
+	}()
 }
