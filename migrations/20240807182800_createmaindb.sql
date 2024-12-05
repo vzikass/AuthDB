@@ -38,7 +38,7 @@ create table goadmin_roles (
     updated_at timestamp default CURRENT_TIMESTAMP
 );
 
-insert into goadmin_roles (slug, name) values ('admin', 'admin');
+-- insert into goadmin_roles (slug, name) values ('admin', 'admin');
 
 -- Table for GoAdmin users
 create table if not exists goadmin_users (
