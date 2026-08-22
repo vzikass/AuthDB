@@ -86,11 +86,11 @@ You can check it :point_right: [here](https://github.com/vzikass/AuthDB/tree/mai
 ~~Just to be~~
 
 ## Project team
-1. Вячеслав Ивкин (Vyacheslav Ivkin) https://github.com/vzikass
+1. Вячеслав И. (Vyacheslav I) https://github.com/vzikass
 
 ## Contributing
 Bug reports and/or pull requests are welcome!\
-*I leave here my contact in telegram for communication(ru, en) - :point_right: [tg](https://t.me/vzikass)
+*I leave here my contact in telegram for communication(ru, en) - :point_right: [tg](https://t.me/vaelself)
 
 ## License
 The module is available as open source under the terms of the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
